@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <android.support.v7.preference.CheckBoxPreference
+        android:key="user_offline"
+        android:title="@string/user_offline_title"
+        android:summary="@string/user_offline_description"
+        android:defaultValue="false"/>
+
+    <android.support.v7.preference.ListPreference
+        android:dependency="user_offline"
+        android:key="user_update_mode"
+        android:title="@string/user_offline_modes_title"
+        android:dialogTitle="@string/user_offline_modes_title"
+        android:summary="@string/user_offline_modes_description"
+        android:entries="@array/user_offline_modes_entries"
+        android:entryValues="@array/user_offline_modes_entry_values"/>
+
+    <android.support.v7.preference.Preference
+        android:key="user_delete_feeds"
+        android:title="@string/user_delete_items_title"
+        android:summary="@string/user_delete_items_description"
+        android:checked="true"/>
+
+    <android.support.v7.preference.PreferenceCategory
+        android:title="@string/user_feeds_category_title"
+        android:key="user_feeds_category">
+
+    </android.support.v7.preference.PreferenceCategory>
+
+</android.support.v7.preference.PreferenceScreen>

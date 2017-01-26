@@ -1,0 +1,1 @@
+include ':app', ':sqldatabase', ':androidhttpclient', ':saxreader'

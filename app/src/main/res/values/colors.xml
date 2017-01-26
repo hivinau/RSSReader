@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#ff9f0c</color>
+    <color name="colorPrimaryDark">#ff9f0c</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="navigation">#eae6e2</color>
+    <color name="navigation_item">#545151</color>
+    <color name="action_bar_background">#CC5D15</color>
+    <color name="action_bar">#ffffff</color>
+    <color name="title_bar_background">#F49C52</color>
+    <color name="title_bar">#ffffff</color>
+    <color name="float_button">#ff9307</color>
+    <color name="background">#eae6e2</color>
+    <color name="card">#f2f3e9</color>
+
+    <color name="add_feed">#ff9f0c</color>
+
+    <color name="rss_title">#868686</color>
+    <color name="rss_date">#6d4107</color>
+    <color name="rss_description">#969695</color>
+
+</resources>

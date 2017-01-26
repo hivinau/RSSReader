@@ -1,0 +1,46 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader">
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true"/>
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".RSSReaderApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme.NoActionBar"
+        android:fullBackupContent="true">
+
+        <activity android:name=".activities.MainActivity"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <data android:scheme="https"
+                    android:host="https://21408268.users.info.unicaen.fr"/>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+
+        </activity>
+
+        <service android:name=".services.RssRequestService"
+            android:exported="false"/>
+
+        <service android:name=".services.DatabaseService"
+            android:exported="false"/>
+
+    </application>
+
+</manifest>

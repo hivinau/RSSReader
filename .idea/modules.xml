@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/RSSReader.iml" filepath="$PROJECT_DIR$/RSSReader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/androidhttpclient/androidhttpclient.iml" filepath="$PROJECT_DIR$/androidhttpclient/androidhttpclient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/saxreader/saxreader.iml" filepath="$PROJECT_DIR$/saxreader/saxreader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sqldatabase/sqldatabase.iml" filepath="$PROJECT_DIR$/sqldatabase/sqldatabase.iml" />
+    </modules>
+  </component>
+</project>

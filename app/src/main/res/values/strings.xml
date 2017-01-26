@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">Mini Lecteur RSS</string>
+
+    <string name="open">close</string>
+    <string name="close">close</string>
+
+    <string name="menu_items">Toutes les actualités</string>
+    <string name="menu_settings">Réglages</string>
+
+    <string name="feeds_title">@string/menu_items</string>
+    <string name="feed_dialog_ok">Ajouter</string>
+    <string name="feed_dialog_cancel">Fermer</string>
+    <string name="feed_dialog_title">Nouveau flux RSS</string>
+    <string name="feed_hint">Ajouter une URL valide</string>
+    <string name="feed_protocol_default">http://</string>
+
+    <string name="add_feed">Bienvenue. Ajouter un nouveau flux !</string>
+    <string name="undo_message">En cours de suppression&#8230;</string>
+    <string name="undo">annuler</string>
+
+    <string name="feed_add_failed">Impossible d\'ajouter le flux</string>
+
+    <string name="user_preferences_title">@string/menu_settings</string>
+    <string name="user_offline_title">Mode Hors-ligne</string>
+    <string name="user_offline_description">Sauvegarder les nouvelles actualités dans cet appareil</string>
+    <string name="user_offline_modes_title">Méthodes de synchronisation</string>
+    <string name="user_offline_mode_0">Ne jamais synchroniser</string>
+    <string name="user_offline_mode_1">Me demander</string>
+    <string name="user_offline_mode_2">Automatique, selon la connexion internet</string>
+    <string name="user_offline_modes_description">Définir à quel moment les actualités se mettent à jour</string>
+    <string name="user_delete_items_title">Effacer les actualités</string>
+    <string name="user_delete_items_description">Supprimer les actualités de cet appareil</string>
+    <string name="user_feeds_category_title">Mes flux</string>
+
+    <string name="channel_delete">Supprimer le flux \"%s\" ?</string>
+    <string name="channels_title">channels_title</string>
+    <string name="channels_summary">channels_summary</string>
+
+    <string name="alert_dialog_ok">OK</string>
+    <string name="alert_dialog_cancel">Fermer</string>
+
+    <string name="database_error_occured">Une erreur est parvenue, réessayez&#8230;</string>
+
+</resources>
