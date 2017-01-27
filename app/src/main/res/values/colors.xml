@@ -14,7 +14,7 @@
     <color name="background">#eae6e2</color>
     <color name="card">#f2f3e9</color>
 
-    <color name="add_feed">#ff9f0c</color>
+    <color name="add_item">#ff9f0c</color>
 
     <color name="rss_title">#868686</color>
     <color name="rss_date">#6d4107</color>

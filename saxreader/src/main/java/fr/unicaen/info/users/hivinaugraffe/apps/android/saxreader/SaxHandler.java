@@ -46,7 +46,7 @@ public class SaxHandler extends DefaultHandler {
 
                 if(item > 0 && listener != null) {
 
-                    listener.onItemParsed(itemContent);
+                    listener.onItemParsed(channelContent, itemContent);
                 }
 
                 item++;
@@ -94,7 +94,7 @@ public class SaxHandler extends DefaultHandler {
 
     public interface ElementListener {
 
-        void onChannelParsed(final Map<String, String> content);
-        void onItemParsed(final Map<String, String> content);
+        void onChannelParsed(final Map<String, String> channel);
+        void onItemParsed(final Map<String, String> channel, final Map<String, String> item);
     }
 }

@@ -16,9 +16,25 @@ public class RSSReaderApplication extends Application {
     private EventManagerListener eventManagerListener = new EventManagerListener() {
 
         @Override
-        public String tablename(SQLiteDatabase database) {
+        public int tablesCount(SQLiteDatabase database) {
 
-            return "RSS_table";
+            return 2;
+        }
+
+        @Override
+        public String tablename(SQLiteDatabase database, int index) {
+
+            final String tablename;
+
+            if(index == 1) {
+
+                tablename = DatabaseConstant.TABLE_ITEMS;
+            } else {
+
+                tablename = DatabaseConstant.TABLE_CHANNELS;
+            }
+
+            return tablename;
         }
 
         @Override
@@ -30,9 +46,17 @@ public class RSSReaderApplication extends Application {
             columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_DESCRIPTION, "TEXT"));
             columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_DATE, "TEXT"));
             columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_LINK, "TEXT"));
-            columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_COPYRIGHT, "TEXT"));
-            columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_GUID, "TEXT"));
-            columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_IMAGE, "TEXT"));
+
+            if(tablename.equals(DatabaseConstant.TABLE_ITEMS)) {
+
+                columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_CHANNEL, "TEXT"));
+                columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_GUID, "TEXT"));
+                columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_IMAGE, "TEXT"));
+
+            } else {
+
+                columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_COPYRIGHT, "TEXT"));
+            }
 
             return columns;
         }

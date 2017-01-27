@@ -6,12 +6,15 @@ import fr.unicaen.info.users.hivinaugraffe.apps.android.sqldatabase.models.*;
 
 public interface IDatabaseHelperListener {
 
+    int tablesCount(SQLiteDatabase database);
+
     /**
      * Set name of table
      * @param database database updated
+     * @param index index of table
      * @return {@link String} name of table
      */
-    String tablename(SQLiteDatabase database);
+    String tablename(SQLiteDatabase database, int index);
 
     /**
      * Set colums of table

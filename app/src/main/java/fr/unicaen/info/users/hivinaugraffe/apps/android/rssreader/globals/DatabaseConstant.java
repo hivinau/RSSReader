@@ -2,6 +2,10 @@ package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals;
 
 public class DatabaseConstant {
 
+    public static final String TABLE_CHANNELS = "channels";
+    public static final String TABLE_ITEMS = "items";
+
+    public static final String TABLE_COLUMN_CHANNEL = "channel";
     public static final String TABLE_COLUMN_TITLE = "title";
     public static final String TABLE_COLUMN_DESCRIPTION = "description";
     public static final String TABLE_COLUMN_DATE = "date";

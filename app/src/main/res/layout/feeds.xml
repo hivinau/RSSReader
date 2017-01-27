@@ -1,50 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tool="http://schemas.android.com/tools"
-    android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tool:context=".activities.MainActivity"
-    android:background="@color/background"
-    android:id="@+id/feeds_coordinator_layout">
+    android:orientation="vertical">
 
-    <RelativeLayout
-        android:id="@+id/welcome_relative_layout"
+    <android.support.design.widget.TabLayout
+        android:id="@+id/sliding_tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:visibility="visible">
+        android:layout_height="wrap_content" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/add_feed"
-            android:textColor="@color/add_feed"
-            android:textSize="@dimen/add_feed"
-            android:gravity="center"
-            android:minLines="2"/>
-
-    </RelativeLayout>
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/feeds_recycler_view"
-        android:scrollbars="vertical"
+    <android.support.v4.view.ViewPager
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="5dp"/>
+        android:layout_height="0px"
+        android:layout_weight="1" />
 
-    <!-- <android.support.design.widget.FloatingActionButton
-        android:id="@+id/add_feed_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@drawable/add"
-        android:background="@color/float_button"
-        app:backgroundTint="@color/float_button"
-        app:layout_anchor="@id/feeds_recycler_view"
-        app:layout_anchorGravity="bottom|right|end"/>
-        app:layout_behavior="fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.views.ScrollAwareFABBehavior"/> -->
-
-</android.support.design.widget.CoordinatorLayout>
+</LinearLayout>

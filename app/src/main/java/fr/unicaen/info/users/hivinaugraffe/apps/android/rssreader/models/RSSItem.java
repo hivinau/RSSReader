@@ -4,12 +4,14 @@ import android.os.*;
 
 public class RSSItem extends RSS implements Parcelable {
 
+    public static final String CHANNEL = "url";
     public static final String LINK = "link";
     public static final String TITLE = "title";
     public static final String DESCRIPTION = "description";
     public static final String DATE = "pubDate";
     public static final String GUID = "guid";
 
+    private String channel = null;
     private String guid = null;
     private String image = null;
 
@@ -28,20 +30,21 @@ public class RSSItem extends RSS implements Parcelable {
         }
     };
 
-    public RSSItem(String title, String description, String date, String link, String guid, String image) {
+    public RSSItem(String title, String description, String date, String link, String channel, String guid, String image) {
         super(title, description, date, link);
 
+        this.channel = channel;
         this.guid = guid;
         this.image = image;
     }
 
     public RSSItem() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
 
     }
 
-    public RSSItem(RSSItem RSSItem) {
-        this(RSSItem.title, RSSItem.description, RSSItem.date, RSSItem.link, RSSItem.guid, RSSItem.image);
+    public RSSItem(RSSItem item) {
+        this(item.title, item.description, item.date, item.link, item.channel, item.guid, item.image);
 
     }
 
@@ -51,6 +54,7 @@ public class RSSItem extends RSS implements Parcelable {
         description = in.readString();
         date = in.readString();
         link = in.readString();
+        channel = in.readString();
         guid = in.readString();
         image = in.readString();
     }
@@ -68,8 +72,19 @@ public class RSSItem extends RSS implements Parcelable {
         dest.writeString(description);
         dest.writeString(date);
         dest.writeString(link);
+        dest.writeString(channel);
         dest.writeString(guid);
         dest.writeString(image);
+    }
+
+    public String getChannel() {
+
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+
+        this.channel = channel;
     }
 
     public String getGuid() {

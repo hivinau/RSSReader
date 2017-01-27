@@ -46,62 +46,29 @@ public class EventManager implements IDatabaseManager {
     @Override
     public synchronized void drop() {
 
-        String tablename = databaseHelper.getDatabaseHelperListener().tablename(database);
+        int count = databaseHelper.getDatabaseHelperListener().tablesCount(database);
 
-        //database.delete(tablename, null, null);
-        databaseHelper.dropTable(database);
+        if(count > 0) {
 
-        ((EventManagerListener) databaseHelper.getDatabaseHelperListener()).tableDropped(database, tablename);
-    }
+            for (int index = 0; index < count; index++) {
 
-    @Override
-    public synchronized boolean tableEmpty() {
-        Cursor cursor = null;
+                String tablename = databaseHelper.getDatabaseHelperListener().tablename(database, index);
 
-        boolean empty = true;
+                //database.delete(tablename, null, null);
+                databaseHelper.dropTable(database);
 
-        try {
-
-            String tablename = databaseHelper.getDatabaseHelperListener().tablename(database);
-
-            String request = String.format("SELECT COUNT(*) FROM '%s'", tablename);
-
-            cursor = database.rawQuery(request, null);
-
-            if(cursor != null) {
-
-                if(cursor.moveToFirst()) {
-
-                    int count = cursor.getInt(0);
-
-                    empty = count <= 0;
-                }
-            }
-
-        } catch (Exception exception) {
-
-            databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
-
-        } finally {
-
-            if(cursor != null) {
-
-                cursor.close();
+                ((EventManagerListener) databaseHelper.getDatabaseHelperListener()).tableDropped(database, tablename);
             }
         }
-
-        return empty;
     }
 
     @Override
-    public synchronized List<Map<String, String>> pullData() {
+    public synchronized List<Map<String, String>> pullData(String tablename) {
 
         List<Map<String, String>> maps = new ArrayList<>();
 
         Cursor cursor = null;
         try {
-
-            String tablename = databaseHelper.getDatabaseHelperListener().tablename(database);
 
             List<TableColumn> columns = databaseHelper.getDatabaseHelperListener().formatTableColums(database, tablename);
 
@@ -149,13 +116,62 @@ public class EventManager implements IDatabaseManager {
     }
 
     @Override
-    public synchronized long pushData(Map<String, String> values) {
+    public List<Map<String, String>> rawQuery(String request, String[] args) {
+
+        List<Map<String, String>> maps = new ArrayList<>();
+
+        Cursor cursor = null;
+
+        try {
+
+            cursor = database.rawQuery(request, null);
+
+            if(cursor != null) {
+
+                if(cursor.moveToFirst()) {
+
+                    while(!cursor.isAfterLast()) {
+
+                        Map<String, String> map = new HashMap<>();
+
+                        int columns = cursor.getColumnCount();
+
+                        for(int i = 0; i < columns; i++) {
+
+                            String columnName = cursor.getColumnName(i);
+
+                            int index = cursor.getColumnIndex(columnName);
+                            map.put(columnName, cursor.getString(index));
+                        }
+
+                        maps.add(map);
+
+                        cursor.moveToNext();
+                    }
+                }
+            }
+
+        } catch (Exception exception) {
+
+            databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
+
+        } finally {
+
+            if(cursor != null) {
+
+                cursor.close();
+            }
+        }
+
+        return maps;
+    }
+
+    @Override
+    public synchronized long pushData(String tablename, Map<String, String> values) {
 
         long id = -1;
 
         try {
-
-            String tablename = databaseHelper.getDatabaseHelperListener().tablename(database);
 
             if(values != null) {
 
@@ -194,14 +210,12 @@ public class EventManager implements IDatabaseManager {
     }
 
     @Override
-    public synchronized boolean dataExist(Map<String, String> args) {
+    public synchronized boolean dataExist(String tablename, Map<String, String> args) {
 
         boolean exist = false;
         Cursor cursor = null;
 
         try {
-
-            String tablename = databaseHelper.getDatabaseHelperListener().tablename(database);
 
             if(args != null && args.size() > 0) {
 
@@ -246,15 +260,13 @@ public class EventManager implements IDatabaseManager {
     }
 
     @Override
-    public synchronized void updateData(String column, String value, Map<String, String> args) {
+    public synchronized void updateData(String tablename, String column, String value, Map<String, String> args) {
 
         if(value != null) {
 
             ContentValues contentValues = new ContentValues();
 
             contentValues.put(column, value);
-
-            String tablename = databaseHelper.getDatabaseHelperListener().tablename(database);
 
             if(args != null && args.size() > 0) {
 
@@ -290,9 +302,7 @@ public class EventManager implements IDatabaseManager {
     }
 
     @Override
-    public synchronized void dropData(Map<String, String> args) {
-
-        String tablename = databaseHelper.getDatabaseHelperListener().tablename(database);
+    public synchronized void dropData(String tablename, Map<String, String> args) {
 
         if(args != null && args.size() > 0) {
 

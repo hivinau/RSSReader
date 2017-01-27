@@ -50,21 +50,22 @@
                 android:onClick="addChannel"
                 android:background="@color/float_button"
                 app:backgroundTint="@color/float_button"/>
+            <!--app:layout_behavior="fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.views.ScrollAwareFABBehavior"/> -->
 
-        </android.support.design.widget.CoordinatorLayout>
+            </android.support.design.widget.CoordinatorLayout>
 
-    </LinearLayout>
+        </LinearLayout>
 
 
-    <android.support.design.widget.NavigationView
-        android:id="@+id/navigation_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:fitsSystemWindows="true"
-        android:background="@color/navigation"
-        app:menu="@menu/navigation"
-        app:itemTextAppearance="@style/AppTheme.NoActionBar.Menu"
-        app:itemBackground="@drawable/selectable_item_background"/>
+        <android.support.design.widget.NavigationView
+            android:id="@+id/navigation_view"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:fitsSystemWindows="true"
+            android:background="@color/navigation"
+            app:menu="@menu/navigation"
+            app:itemTextAppearance="@style/AppTheme.NoActionBar.Menu"
+            app:itemBackground="@drawable/selectable_item_background"/>
 
-</android.support.v4.widget.DrawerLayout>
+    </android.support.v4.widget.DrawerLayout>

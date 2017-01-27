@@ -6,12 +6,15 @@ import android.content.*;
 import android.support.v7.preference.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.R;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.views.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.services.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities.*;
 
 public class UserPreferences extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener, ListPreference.OnPreferenceChangeListener, MarqueePreference.OnPreferenceLongClickListener {
+
+    public static final String CHANNELS = "channels";
 
     private Preference deleteFeedsPreference = null;
     private ListPreference updateModePreference = null;
@@ -65,18 +68,12 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
     public void onStart() {
         super.onStart();
 
-        String titlesKey = getString(R.string.channels_title);
-        String linksKey = getString(R.string.channels_summary);
+        Set<String> channels = new HashSet<>(preferences.getStringSet(UserPreferences.CHANNELS, new HashSet<String>()));
 
-        Set<String> titlesSet = new HashSet<>(preferences.getStringSet(titlesKey, new HashSet<String>()));
-        Set<String> linksSet = new HashSet<>(preferences.getStringSet(linksKey, new HashSet<String>()));
+        for(String channelString: channels) {
 
-        Object[] titles = titlesSet.toArray();
-        Object[] links = linksSet.toArray();
-
-        for(int i = 0, j = 0; i < titles.length && j < links.length;  i++, j++) {
-
-            addChannel((String) titles[i], (String) links[i]);
+            RSSChannel channel = RSSChannel.valueOf(channelString);
+            addChannel(channel);
         }
     }
 
@@ -125,14 +122,14 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
         return false;
     }
 
-    private void addChannel(String title, String summary) {
+    private void addChannel(RSSChannel channel) {
 
-        if(title != null && summary != null) {
+        if(channel.getTitle() != null && channel.getLink() != null) {
 
             MarqueePreference preference = new MarqueePreference(getActivity());
-            preference.setKey(title);
-            preference.setTitle(title);
-            preference.setSummary(summary);
+            preference.setKey(channel.getLink());
+            preference.setTitle(channel.getTitle());
+            preference.setSummary(channel.getLink());
             preference.setEnabled(true);
             preference.setOnPreferenceLongClickListener(this);
 
@@ -140,29 +137,35 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
         }
     }
 
-    private void removeChannel(String title) {
+    private void removeChannel(String key) {
 
-        if(title != null) {
+        if(key != null) {
 
-            MarqueePreference preference = (MarqueePreference) findPreference(title);
+            Set<String> channels = new HashSet<>(preferences.getStringSet(UserPreferences.CHANNELS, new HashSet<String>()));
 
+            Iterator<String> iterator = channels.iterator();
+
+            while(iterator.hasNext()) {
+
+                RSSChannel channel = RSSChannel.valueOf(iterator.next());
+
+                String link = channel.getLink();
+                if(link != null && link.equals(key)) {
+
+                    iterator.remove();
+                    break;
+                }
+            }
+
+            MarqueePreference preference = (MarqueePreference) findPreference(key);
             feedsCategory.removePreference(preference);
-
-            String titlesKey = getString(R.string.channels_title);
-            String linksKey = getString(R.string.channels_summary);
-
-            Set<String> titlesSet = new HashSet<>(preferences.getStringSet(titlesKey, new HashSet<String>()));
-            Set<String> linksSet = new HashSet<>(preferences.getStringSet(linksKey, new HashSet<String>()));
-
-            titlesSet.remove(String.format("%s", preference.getTitle()));
-            linksSet.remove(String.format("%s", preference.getSummary()));
 
             SharedPreferences.Editor editor = preferences.edit();
 
-            editor.putStringSet(titlesKey, titlesSet);
-            editor.putStringSet(linksKey, linksSet);
+            editor.putStringSet(UserPreferences.CHANNELS, channels);
 
             editor.apply();
         }
+
     }
 }

@@ -51,30 +51,39 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         try {
 
-            String tablename = listener.tablename(database);
+            int count = listener.tablesCount(database);
 
-            List<TableColumn> columns = listener.formatTableColums(database, tablename);
+            if(count > 0) {
 
-            String columnsName = "id INTEGER PRIMARY KEY AUTOINCREMENT,";
+                for(int index = 0; index < count; index++) {
 
-            if(columns != null) {
+                    String tablename = listener.tablename(database, index);
 
-                for(TableColumn column: columns) {
+                    List<TableColumn> columns = listener.formatTableColums(database, tablename);
 
-                    columnsName += String.format("%s %s,", column.getName(), column.getType());
+                    String columnsName = "id INTEGER PRIMARY KEY AUTOINCREMENT,";
+
+                    if(columns != null) {
+
+                        for(TableColumn column: columns) {
+
+                            columnsName += String.format("%s %s,", column.getName(), column.getType());
+                        }
+                    }
+
+                    if (columnsName.endsWith(",")) {
+
+                        columnsName = columnsName.substring(0, columnsName.length() - 1); //remove last ','
+                    }
+
+                    String request = String.format("CREATE TABLE IF NOT EXISTS %s (%s)", tablename, columnsName);
+
+                    database.execSQL(request);
                 }
+
+                listener.onSuccess(database);
             }
 
-            if (columnsName.endsWith(",")) {
-
-                columnsName = columnsName.substring(0, columnsName.length() - 1); //remove last ','
-            }
-
-            String request = String.format("CREATE TABLE IF NOT EXISTS %s (%s)", tablename, columnsName);
-
-            database.execSQL(request);
-
-            listener.onSuccess(database);
 
         } catch(Exception exception) {
 
@@ -94,9 +103,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         try {
 
-            String request = String.format("DROP TABLE IF EXISTS '%s'", listener.tablename(database));
+            int count = listener.tablesCount(database);
 
-            database.execSQL(request);
+            if(count > 0) {
+
+                for (int index = 0; index < count; index++) {
+
+                    String request = String.format("DROP TABLE IF EXISTS '%s'", listener.tablename(database, index));
+
+                    database.execSQL(request);
+                }
+            }
             onCreate(database);
 
         } catch(Exception exception) {

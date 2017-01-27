@@ -203,7 +203,7 @@ public class DatabaseService extends BaseService {
         manager.open();
 
         Map<String, String> map = mapItem(item);
-        manager.pushData(map);
+        manager.pushData(DatabaseConstant.TABLE_ITEMS, map);
 
         manager.close();
 
@@ -219,7 +219,7 @@ public class DatabaseService extends BaseService {
         manager.open();
 
         Map<String, String> map = mapItem(item);
-        manager.dropData(map);
+        manager.dropData(DatabaseConstant.TABLE_ITEMS, map);
 
         manager.close();
 
@@ -234,7 +234,7 @@ public class DatabaseService extends BaseService {
 
         manager.open();
 
-        List<Map<String, String>> maps =  manager.pullData();
+        List<Map<String, String>> maps =  manager.pullData(DatabaseConstant.TABLE_ITEMS);
 
         if(maps.size() > 0) {
 

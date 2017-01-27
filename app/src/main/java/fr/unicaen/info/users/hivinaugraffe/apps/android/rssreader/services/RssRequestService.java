@@ -144,40 +144,42 @@ public class RssRequestService extends BaseService implements SaxHandler.Element
     }
 
     @Override
-    public void onItemParsed(Map<String, String> content) {
+    public void onItemParsed(Map<String, String> channel, Map<String, String> item) {
 
-        if(content.size() > 0) {
+        if(channel.size() > 0 && item.size() > 0) {
 
-            RSSItem item = new RSSItem();
+            RSSItem rssItem = new RSSItem();
 
-            for(Map.Entry<String, String> entry: content.entrySet()) {
+            rssItem.setChannel(channel.get(RSSItem.CHANNEL));
+
+            for(Map.Entry<String, String> entry: item.entrySet()) {
 
                 final String node = entry.getKey();
                 final String value = entry.getValue();
 
                 if(node.equalsIgnoreCase(RSSItem.TITLE)) {
 
-                    item.setTitle(value);
+                    rssItem.setTitle(value);
 
                 } else if(node.equalsIgnoreCase(RSSItem.DESCRIPTION)) {
 
-                    item.setDescription(value);
+                    rssItem.setDescription(value);
 
                 } else if(node.equalsIgnoreCase(RSSItem.DATE)) {
 
-                    item.setDate(value);
+                    rssItem.setDate(value);
 
                 } else if(node.equalsIgnoreCase(RSSItem.LINK)) {
 
-                    item.setLink(value);
+                    rssItem.setLink(value);
 
                 } else if(node.equalsIgnoreCase(RSSItem.GUID)) {
 
-                    item.setGuid(value);
+                    rssItem.setGuid(value);
                 }
             }
 
-            sendItem(item);
+            sendItem(rssItem);
         }
     }
 

@@ -1,11 +1,10 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities;
 
 import java.util.*;
-
-import android.annotation.SuppressLint;
 import android.os.*;
 import android.view.*;
 import android.content.*;
+import android.annotation.*;
 import android.content.res.*;
 import android.support.v4.app.*;
 import android.support.v7.app.*;
@@ -24,7 +23,6 @@ import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.services.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.fragments.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.fragments.AlertDialog;
-
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, FragmentManager.OnBackStackChangedListener {
 
@@ -112,6 +110,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
         toggle.syncState();
+
+        if(savedInstanceState == null) {
+
+            FragmentHelper.addFragment(this, Feeds.class.getName(), R.id.fragments_container, null);
+        }
     }
 
     @Override
@@ -142,16 +145,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         Intent databaseIntent= new Intent(MainActivity.this, DatabaseService.class);
         bindService(databaseIntent, databaseConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    protected void onPostResume() {
-        super.onPostResume();
-
-        if(FragmentHelper.fragmentsCount(this) == 0) {
-
-            FragmentHelper.addFragment(this, Feeds.class.getName(), R.id.fragments_container, null);
-        }
     }
 
     @Override
@@ -192,29 +185,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     if (channel != null) {
 
-                        String title = channel.getTitle();
-                        String link = channel.getLink();
+                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-                        if(title != null && link != null) {
+                        Set<String> channels = new HashSet<>(preferences.getStringSet(UserPreferences.CHANNELS, new HashSet<String>()));
+                        channels.add(channel.toString());
 
-                            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                        SharedPreferences.Editor editor = preferences.edit();
+                        editor.putStringSet(UserPreferences.CHANNELS, channels);
 
-                            String titlesKey = getString(R.string.channels_title);
-                            String linksKey = getString(R.string.channels_summary);
-
-                            Set<String> titles = new HashSet<>(preferences.getStringSet(titlesKey, new HashSet<String>()));
-                            Set<String> links = new HashSet<>(preferences.getStringSet(linksKey, new HashSet<String>()));
-
-                            SharedPreferences.Editor editor = preferences.edit();
-
-                            titles.add(title);
-                            links.add(link);
-
-                            editor.putStringSet(titlesKey, titles);
-                            editor.putStringSet(linksKey, links);
-
-                            editor.apply();
-                        }
+                        editor.apply();
                     }
                 }
 
@@ -321,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 break;
             case R.id.settings_menu_item:
 
-                if(FragmentHelper.fragmentExist(this, MainActivity.USER_PREFERENCES_FRAGMENT)) {
+                if(FragmentHelper.findFragmentByTag(this, UserPreferences.class.getName()) != null) {
 
                     FragmentHelper.popToFragment(this, MainActivity.USER_PREFERENCES_FRAGMENT);
 

@@ -34,8 +34,8 @@ public class FragmentHelper {
 
                 FragmentTransaction transaction = manager.beginTransaction();
                 //transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-                transaction.replace(containerId, fragment, fragmentClassname);
-                transaction.addToBackStack(fragmentClassname);
+                transaction = transaction.replace(containerId, fragment, fragmentClassname);
+                transaction = transaction.addToBackStack(fragmentClassname);
 
                 id = transaction.commit();
             }
@@ -69,11 +69,11 @@ public class FragmentHelper {
         return popped;
     }
 
-    public static boolean fragmentExist(AppCompatActivity activity, int id) {
+    public static Fragment findFragmentByTag(AppCompatActivity activity, String tag) {
 
         FragmentManager manager = activity.getSupportFragmentManager();
 
-        return manager.findFragmentById(id) != null;
+        return manager.findFragmentByTag(tag);
     }
 
     public static int fragmentsCount(AppCompatActivity activity) {
