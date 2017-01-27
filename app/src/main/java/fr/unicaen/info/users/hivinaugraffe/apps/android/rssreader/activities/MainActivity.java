@@ -1,10 +1,9 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities;
 
-import java.util.*;
 import android.os.*;
 import android.view.*;
 import android.content.*;
-import android.annotation.*;
+import android.preference.*;
 import android.content.res.*;
 import android.support.v4.app.*;
 import android.support.v7.app.*;
@@ -15,9 +14,7 @@ import android.support.annotation.*;
 import android.support.design.widget.*;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.preference.PreferenceManager;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.R;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.services.*;
@@ -34,7 +31,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ActionBarDrawerToggle toggle = null;
     private NavigationView navigationView = null;
     private CoordinatorLayout coordinatorLayout = null;
-    private Message message = null;
     private boolean rssServiceConnectionEstablished = false;
     private boolean databaseServiceConnectionEstablished = false;
     private boolean isDialog = false;
@@ -110,11 +106,53 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
         toggle.syncState();
+    }
 
-        if(savedInstanceState == null) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
 
-            FragmentHelper.addFragment(this, Feeds.class.getName(), R.id.fragments_container, null);
+        MenuInflater inflater = getMenuInflater();
+
+        inflater.inflate(R.menu.action, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        boolean offline = preferences.getBoolean("user_offline", false);
+
+        if(offline) {
+
+            String value = preferences.getString("user_update_mode", "0");
+            menu.findItem(R.id.refresh).setVisible(value.equals("1"));
         }
+
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.refresh:
+
+                Intent intent = new Intent();
+
+                Bundle bundle = new Bundle();
+                bundle.putBoolean(BundleConstant.FORCE_REQUEST, true);
+
+                intent.setAction(Action.PULL_CHANNELS);
+                intent.putExtras(bundle);
+
+                sendBroadcast(intent);
+                return true;
+        }
+
+        return toggle.onOptionsItemSelected(item);
     }
 
     @Override
@@ -140,11 +178,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawerLayout.addDrawerListener(toggle);
         navigationView.setNavigationItemSelectedListener(this);
 
-        Intent rssIntent= new Intent(MainActivity.this, RssRequestService.class);
+        Intent rssIntent = new Intent(MainActivity.this, RssRequestService.class);
         bindService(rssIntent, rssConnection, Context.BIND_AUTO_CREATE);
 
-        Intent databaseIntent= new Intent(MainActivity.this, DatabaseService.class);
+        Intent databaseIntent = new Intent(MainActivity.this, DatabaseService.class);
         bindService(databaseIntent, databaseConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+
+        if(FragmentHelper.findFragmentByTag(this, Feeds.class.getName()) == null) {
+
+            FragmentHelper.addFragment(this, Feeds.class.getName(), R.id.fragments_container, null);
+        }
     }
 
     @Override
@@ -175,59 +223,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         final Bundle bundle;
 
         switch (action) {
-            case Action.THROW_CHANNEL:
-
-                bundle = intent.getExtras();
-
-                if(bundle != null) {
-
-                    RSSChannel channel = bundle.getParcelable(BundleConstant.CHANNEL);
-
-                    if (channel != null) {
-
-                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-                        Set<String> channels = new HashSet<>(preferences.getStringSet(UserPreferences.CHANNELS, new HashSet<String>()));
-                        channels.add(channel.toString());
-
-                        SharedPreferences.Editor editor = preferences.edit();
-                        editor.putStringSet(UserPreferences.CHANNELS, channels);
-
-                        editor.apply();
-                    }
-                }
-
-                break;
-            case Action.THROW_ITEM:
-
-                bundle = intent.getExtras();
-
-                if(bundle != null) {
-
-                    RSSItem item = bundle.getParcelable(BundleConstant.ITEM);
-
-                    if (item != null) {
-
-                        handle(HandlerConstant.ITEM_AVAILABLE, item);
-
-                        String source = bundle.getString(BundleConstant.ITEM_SOURCE);
-
-                        if(source != null && source.equals(RssRequestService.class.getName())) {
-
-                            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-                            boolean offline = preferences.getBoolean("user_offline", false);
-
-                            if(offline) {
-
-                                bundle.putParcelable(BundleConstant.ITEM_TO_PUSH_ON_DATABASE, item);
-
-                                IntentHelper.sentToService(this, DatabaseService.class, Action.DATABASE_REQUESTED_TO_PUSH_ITEM, bundle);
-                            }
-                        }
-                    }
-                }
-
-                break;
             case Action.THROW_ERROR:
 
                 bundle = intent.getExtras();
@@ -236,25 +231,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     showError(bundle.getString(BundleConstant.ERROR_OCCURED, getString(R.string.feed_add_failed)));
                 }
-                break;
-            case Action.DATABASE_REQUESTED_TO_REMOVE_ITEM:
-
-                bundle = intent.getExtras();
-
-                if(bundle != null) {
-
-                    RSSItem item = bundle.getParcelable(BundleConstant.ITEM);
-                    int position = bundle.getInt(BundleConstant.POSITION);
-
-                    if(item != null) {
-
-                        removeItem(item, position);
-                    }
-                }
-                break;
-            case Action.THROW_DATABASE_DROPPED_STATE:
-
-                handle(HandlerConstant.DATABASE_DROPPED, null);
                 break;
             case Action.DATABASE_HANDLE_EVENT:
 
@@ -323,12 +299,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        return toggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onBackStackChanged() {
 
         if(!isDialog) {
@@ -379,10 +349,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                         if(msg.obj != null && msg.obj instanceof String) {
 
+                            Intent intent = new Intent();
+
                             Bundle bundle = new Bundle();
                             bundle.putString(BundleConstant.URL, (String) msg.obj);
 
-                            IntentHelper.sentToService(MainActivity.this, RssRequestService.class, Action.HTTP_REQUEST_WITH_URL, bundle);
+                            intent.setAction(Action.HTTP_REQUEST_WITH_URL);
+                            intent.putExtras(bundle);
+
+                            sendBroadcast(intent);
                         }
                         break;
                     default:
@@ -394,12 +369,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         dialog.show(transaction, ChannelDialog.class.getName());
     }
 
-    public void askToDeletePreference(final String key) {
+    public void askToDeletePreference(final String url) {
 
-        AlertDialog dialog = AlertDialog.newInstance(getString(R.string.channel_delete, key));
+        AlertDialog dialog = AlertDialog.newInstance(getString(R.string.channel_delete, url));
         dialog.setHandler(new Handler(Looper.getMainLooper()) {
 
-            @SuppressLint("CommitPrefEdits")
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
@@ -407,7 +381,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 switch (msg.what) {
                     case HandlerConstant.DIALOG_BUTTON_CLICKED:
 
-                        handle(HandlerConstant.CHANNEL_REMOVED, key);
+                        Intent intent = new Intent();
+
+                        Bundle bundle = new Bundle();
+                        bundle.putString(BundleConstant.URL, url);
+
+                        intent.setAction(Action.DELETE_FEED);
+                        intent.putExtras(bundle);
+
+                        sendBroadcast(intent);
                         break;
                     default:
                         break;
@@ -416,46 +398,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
 
         dialog.show(getSupportFragmentManager(), AlertDialog.class.getName());
-    }
-
-    public void setHandler(Handler handler) {
-
-        if(handler != null) {
-
-            message = handler.obtainMessage();
-        }
-    }
-
-    private void handle(int action, Object object) {
-
-        if(message != null) {
-
-            if(object != null) {
-
-                message.obj = object;
-            }
-
-            message.what = action;
-
-            Handler handler = message.getTarget();
-
-            if(handler != null) {
-
-                Looper looper = handler.getLooper();
-
-                if(looper != null) {
-
-                    if(looper == Looper.getMainLooper()) {
-
-                        handler.handleMessage(message);
-
-                    } else {
-
-                        message.sendToTarget();
-                    }
-                }
-            }
-        }
     }
 
     private void showError(final String error) {
@@ -470,33 +412,4 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
-    private void removeItem(RSSItem item, int position) {
-
-        final Snackbar snackbar = Snackbar.make(coordinatorLayout, getString(R.string.undo_message), Snackbar.LENGTH_LONG);
-
-        final Bundle bundle = new Bundle();
-        bundle.putParcelable(BundleConstant.ITEM, item);
-        bundle.putInt(BundleConstant.POSITION, position);
-
-        snackbar.addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>() {
-
-            @Override
-            public void onDismissed(Snackbar transientBottomBar, int event) {
-                super.onDismissed(transientBottomBar, event);
-
-                IntentHelper.sentToService(MainActivity.this, DatabaseService.class, Action.DATABASE_REQUESTED_TO_REMOVE_ITEM, bundle);
-            }
-        });
-
-        snackbar.setAction(getString(R.string.undo), new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-
-                handle(HandlerConstant.ITEM_AVAILABLE_AT_POSITION, bundle);
-            }
-        });
-
-        snackbar.show();
-    }
 }

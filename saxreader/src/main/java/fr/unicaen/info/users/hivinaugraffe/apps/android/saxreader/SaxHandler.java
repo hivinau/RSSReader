@@ -1,17 +1,17 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader;
 
-import java.util.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 
 public class SaxHandler extends DefaultHandler {
 
     private final ElementListener listener;
     private final StringBuilder values;
 
-    private int item;
-    private final Map<String, String> channelContent;
-    private final Map<String, String> itemContent;
+    private final Channel channel;
+
+    private Item item = null;
 
     private String node = null;
     private boolean itemParsing = false;
@@ -22,10 +22,8 @@ public class SaxHandler extends DefaultHandler {
         this.listener = listener;
         values = new StringBuilder();
 
-        channelContent = new HashMap<>();
-        itemContent = new HashMap<>();
-
-        item = 0;
+        channel = new Channel();
+        item = new Item();
     }
 
     @Override
@@ -44,13 +42,8 @@ public class SaxHandler extends DefaultHandler {
 
                 itemParsing = true;
 
-                if(item > 0 && listener != null) {
-
-                    listener.onItemParsed(channelContent, itemContent);
-                }
-
-                item++;
-                itemContent.clear();
+                channel.addItem(item);
+                item = new Item();
             }
 
             this.node = node;
@@ -67,10 +60,10 @@ public class SaxHandler extends DefaultHandler {
 
             if(itemParsing) {
 
-                itemContent.put(this.node, values.toString());
+                parseItem(this.node, values.toString());
             } else {
 
-                channelContent.put(this.node, values.toString());
+                parseChannel(this.node, values.toString());
             }
         }
     }
@@ -88,13 +81,57 @@ public class SaxHandler extends DefaultHandler {
 
         if(listener != null) {
 
-            listener.onChannelParsed(channelContent);
+            listener.onParsingFinished(channel);
+        }
+    }
+
+    private void parseChannel(String node, String value) {
+
+        if(node.equalsIgnoreCase(Channel.TITLE)) {
+
+            channel.setTitle(value);
+
+        } else if(node.equalsIgnoreCase(Channel.DESCRIPTION)) {
+
+            channel.setDescription(value);
+
+        } else if(node.equalsIgnoreCase(Channel.DATE)) {
+
+            channel.setDate(value);
+
+        } else if(node.equalsIgnoreCase(Channel.LINK)) {
+
+            channel.setLink(value);
+
+        }
+    }
+
+    private void parseItem(String node, String value) {
+
+        if(node.equalsIgnoreCase(Item.TITLE)) {
+
+            item.setTitle(value);
+
+        } else if(node.equalsIgnoreCase(Item.DESCRIPTION)) {
+
+            item.setDescription(value);
+
+        } else if(node.equalsIgnoreCase(Item.DATE)) {
+
+            item.setDate(value);
+
+        } else if(node.equalsIgnoreCase(Item.LINK)) {
+
+            item.setLink(value);
+
+        } else if(node.equalsIgnoreCase(Item.GUID)) {
+
+            item.setGuid(value);
         }
     }
 
     public interface ElementListener {
 
-        void onChannelParsed(final Map<String, String> channel);
-        void onItemParsed(final Map<String, String> channel, final Map<String, String> item);
+        void onParsingFinished(final Channel channel);
     }
 }

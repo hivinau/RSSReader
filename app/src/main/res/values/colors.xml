@@ -14,10 +14,14 @@
     <color name="background">#eae6e2</color>
     <color name="card">#f2f3e9</color>
 
-    <color name="add_item">#ff9f0c</color>
+    <color name="no_items">#ff9f0c</color>
 
     <color name="rss_title">#868686</color>
     <color name="rss_date">#6d4107</color>
     <color name="rss_description">#969695</color>
 
+    <color name="tab_background">@color/action_bar_background</color>
+    <color name="tab_indicator">#ffffff</color>
+    <color name="tab_text_normal">#eae6e2</color>
+    <color name="tab_text_selected">#ffffff</color>
 </resources>

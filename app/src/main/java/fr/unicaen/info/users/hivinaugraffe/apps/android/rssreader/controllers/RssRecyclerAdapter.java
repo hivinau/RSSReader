@@ -5,11 +5,11 @@ import android.view.*;
 import android.widget.*;
 import android.support.v7.widget.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.R;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 
 public class RssRecyclerAdapter extends RecyclerView.Adapter<RssRecyclerAdapter.ViewHolder> {
 
-    private final List<RSSItem> items;
+    private final List<Item> items;
     private final Set<OnCardClickListener> cardClickListeners;
 
     public RssRecyclerAdapter() {
@@ -18,12 +18,12 @@ public class RssRecyclerAdapter extends RecyclerView.Adapter<RssRecyclerAdapter.
         cardClickListeners = new HashSet<>();
     }
 
-    public void add(RSSItem item) {
+    public void add(Item item) {
 
         add(items.size(), item, true);
     }
 
-    public void add(int position, RSSItem item, boolean notify) {
+    public void add(int position, Item item, boolean notify) {
 
         if(!items.contains(item)) {
 
@@ -37,12 +37,12 @@ public class RssRecyclerAdapter extends RecyclerView.Adapter<RssRecyclerAdapter.
     }
 
     @SuppressWarnings({"unused"})
-    public void remove(RSSItem item) {
+    public void remove(Item item) {
 
         remove(item, true);
     }
 
-    public void remove(RSSItem item, boolean notify) {
+    public void remove(Item item, boolean notify) {
 
         items.remove(item);
 
@@ -52,22 +52,23 @@ public class RssRecyclerAdapter extends RecyclerView.Adapter<RssRecyclerAdapter.
         }
     }
 
+    @SuppressWarnings({"unused"})
     public void clear() {
 
         items.clear();
         notifyDataSetChanged();
     }
 
-    public RSSItem getItemAt(int position) {
+    public Item getItemAt(int position) {
 
-        RSSItem item = null;
+        Item item = null;
 
-        Iterator<RSSItem> iterator = items.iterator();
+        Iterator<Item> iterator = items.iterator();
 
         int index = 0;
         while (iterator.hasNext()) {
 
-            RSSItem a = iterator.next();
+            Item a = iterator.next();
 
             if(index == position) {
 
@@ -104,7 +105,6 @@ public class RssRecyclerAdapter extends RecyclerView.Adapter<RssRecyclerAdapter.
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 
-        Object[] array = items.toArray();
 
         final ViewHolder viewHolder = holder;
 
@@ -120,13 +120,26 @@ public class RssRecyclerAdapter extends RecyclerView.Adapter<RssRecyclerAdapter.
             }
         });
 
-        if(position >= 0 && position < array.length) {
+        Item[] items = this.items.toArray(new Item[this.items.size()]);
 
-            RSSItem item = (RSSItem) array[position];
+        if(position >= 0 && position < items.length) {
 
-            viewHolder.titleTextView.setText(item.getTitle());
-            viewHolder.dateTextView.setText(item.getDate());
-            viewHolder.descriptionTextView.setText(item.getDescription());
+            Item item = items[position];
+
+            if(item != null) {
+
+                String title = item.getTitle();
+                String date = item.getDate();
+                String description = item.getDescription();
+
+                if(title != null && date != null && description != null) {
+
+                    viewHolder.titleTextView.setText(title);
+                    viewHolder.dateTextView.setText(date);
+                    viewHolder.descriptionTextView.setText(description);
+                }
+            }
+
         }
     }
 

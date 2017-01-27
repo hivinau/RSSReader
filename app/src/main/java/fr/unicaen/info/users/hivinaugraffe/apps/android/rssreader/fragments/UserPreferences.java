@@ -1,47 +1,101 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.fragments;
 
-import java.util.*;
 import android.os.*;
 import android.content.*;
+import android.support.annotation.*;
 import android.support.v7.preference.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.R;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.views.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.services.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 
 public class UserPreferences extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener, ListPreference.OnPreferenceChangeListener, MarqueePreference.OnPreferenceLongClickListener {
-
-    public static final String CHANNELS = "channels";
 
     private Preference deleteFeedsPreference = null;
     private ListPreference updateModePreference = null;
     private PreferenceCategory feedsCategory = null;
+    private IntentFilter filter = null;
 
-    private SharedPreferences preferences = null;
-
-    private final Handler handler = new Handler(Looper.getMainLooper()) {
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 
         @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
+        public void onReceive(Context context, Intent intent) {
 
-            switch (msg.what) {
-                case HandlerConstant.CHANNEL_ADDED:
+            String action = intent.getAction();
 
-                    break;
-                case HandlerConstant.CHANNEL_REMOVED:
+            if(action != null) {
 
-                    if(msg.obj != null && msg.obj instanceof String) {
+                if (action.equals(Action.THROW_NEW_CHANNEL) || action.equals(Action.THROW_CHANNEL)) {
 
-                        String key = (String) msg.obj;
-                        removeChannel(key);
+                    Bundle bundle = intent.getExtras();
+
+                    if (bundle != null) {
+
+                        final Channel channel = bundle.getParcelable(BundleConstant.CHANNEL);
+                        boolean forcing = bundle.getBoolean(BundleConstant.FORCE_REQUEST, false);
+
+                        if (channel != null) {
+
+                            SharedPreferences preferences = android.preference.PreferenceManager.getDefaultSharedPreferences(getActivity());
+                            boolean offline = preferences.getBoolean("user_offline", false);
+                            String value = preferences.getString("user_update_mode", "0");
+
+                            if (offline && (forcing || value.equals("2"))) {
+
+                                String link = channel.getLink();
+
+                                if (link != null) {
+
+                                    intent = new Intent();
+
+                                    bundle = new Bundle();
+                                    bundle.putString(BundleConstant.URL, link);
+
+                                    intent.setAction(Action.HTTP_REQUEST_WITH_URL);
+                                    intent.putExtras(bundle);
+
+                                    getActivity().sendBroadcast(intent);
+                                }
+                            }
+
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    addChannel(channel);
+                                }
+                            });
+                        }
                     }
-                    break;
-                default:
-                    break;
+                } else if (action.equals(Action.REFRESH)) {
+
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            feedsCategory.removeAll();
+
+                            Thread delay = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    try {
+
+                                        Thread.sleep(460);
+
+                                        getActivity().sendBroadcast(new Intent(Action.PULL_CHANNELS));
+                                    } catch (Exception ignored) {}
+                                }
+                            });
+
+                            delay.setPriority(Thread.MAX_PRIORITY);
+                            delay.setDaemon(true);
+                            delay.setName(UserPreferences.class.getName());
+                            delay.start();
+                        }
+                    });
+                }
             }
         }
     };
@@ -57,24 +111,18 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        ((MainActivity) getActivity()).setHandler(handler);
-        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-    }
+        if(updateModePreference.getValue() == null){
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        Set<String> channels = new HashSet<>(preferences.getStringSet(UserPreferences.CHANNELS, new HashSet<String>()));
-
-        for(String channelString: channels) {
-
-            RSSChannel channel = RSSChannel.valueOf(channelString);
-            addChannel(channel);
+            updateModePreference.setValueIndex(0);
         }
+
+        filter = new IntentFilter();
+        filter.addAction(Action.THROW_NEW_CHANNEL);
+        filter.addAction(Action.THROW_CHANNEL);
+        filter.addAction(Action.REFRESH);
     }
 
     @Override
@@ -83,6 +131,38 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
 
         deleteFeedsPreference.setOnPreferenceClickListener(this);
         updateModePreference.setOnPreferenceChangeListener(this);
+
+        getActivity().registerReceiver(broadcastReceiver, filter);
+
+        Thread delay = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+
+                    Thread.sleep(460);
+
+                    SharedPreferences preferences = android.preference.PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    boolean offline = preferences.getBoolean("user_offline", false);
+                    String value = preferences.getString("user_update_mode", "0");
+
+                    Intent intent = new Intent();
+
+                    Bundle bundle = new Bundle();
+                    bundle.putBoolean(BundleConstant.FORCE_REQUEST, offline && value.equals("2"));
+
+                    intent.setAction(Action.PULL_CHANNELS);
+                    intent.putExtras(bundle);
+
+                    getActivity().sendBroadcast(intent);
+                } catch (Exception ignored) {}
+            }
+        });
+
+        delay.setPriority(Thread.MAX_PRIORITY);
+        delay.setDaemon(true);
+        delay.setName(UserPreferences.class.getName());
+        delay.start();
     }
 
     @Override
@@ -91,6 +171,8 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
 
         deleteFeedsPreference.setOnPreferenceClickListener(null);
         updateModePreference.setOnPreferenceChangeListener(null);
+
+        getActivity().unregisterReceiver(broadcastReceiver);
     }
 
     @Override
@@ -103,13 +185,35 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
     @Override
     public boolean onPreferenceClick(Preference preference) {
 
-        IntentHelper.sentToService(getActivity(), DatabaseService.class, Action.DATABASE_REQUESTED_TO_CLEAR_ITEMS, null);
+        int count = feedsCategory.getPreferenceCount();
+
+        for(int i = 0; i < count; i++) {
+
+            Preference pref = feedsCategory.getPreference(i);
+
+            String url = pref.getKey();
+
+            if(url != null) {
+
+                Intent intent = new Intent();
+
+                Bundle bundle = new Bundle();
+                bundle.putString(BundleConstant.URL, url);
+
+                intent.setAction(Action.CLEAR_ITEMS);
+                intent.putExtras(bundle);
+
+                getActivity().sendBroadcast(intent);
+            }
+        }
 
         return true;
     }
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+        getActivity().invalidateOptionsMenu();
 
         return true;
     }
@@ -122,50 +226,25 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
         return false;
     }
 
-    private void addChannel(RSSChannel channel) {
+    private void addChannel(Channel channel) {
 
-        if(channel.getTitle() != null && channel.getLink() != null) {
+        String title = channel.getTitle();
+        String link = channel.getLink();
 
-            MarqueePreference preference = new MarqueePreference(getActivity());
-            preference.setKey(channel.getLink());
-            preference.setTitle(channel.getTitle());
-            preference.setSummary(channel.getLink());
-            preference.setEnabled(true);
-            preference.setOnPreferenceLongClickListener(this);
+        if(title != null && link != null) {
 
-            feedsCategory.addPreference(preference);
-        }
-    }
+            if(feedsCategory.findPreference(link) == null) {
 
-    private void removeChannel(String key) {
+                MarqueePreference preference = new MarqueePreference(getActivity());
+                preference.setKey(link);
+                preference.setTitle(title);
+                preference.setSummary(link);
+                preference.setEnabled(true);
+                preference.setOnPreferenceLongClickListener(this);
 
-        if(key != null) {
-
-            Set<String> channels = new HashSet<>(preferences.getStringSet(UserPreferences.CHANNELS, new HashSet<String>()));
-
-            Iterator<String> iterator = channels.iterator();
-
-            while(iterator.hasNext()) {
-
-                RSSChannel channel = RSSChannel.valueOf(iterator.next());
-
-                String link = channel.getLink();
-                if(link != null && link.equals(key)) {
-
-                    iterator.remove();
-                    break;
-                }
+                feedsCategory.addPreference(preference);
             }
-
-            MarqueePreference preference = (MarqueePreference) findPreference(key);
-            feedsCategory.removePreference(preference);
-
-            SharedPreferences.Editor editor = preferences.edit();
-
-            editor.putStringSet(UserPreferences.CHANNELS, channels);
-
-            editor.apply();
         }
-
     }
+
 }

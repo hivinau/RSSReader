@@ -71,7 +71,7 @@ public class ChannelDialog extends DialogFragment {
         getDialog().setCancelable(false);
 
         //debug:
-        feedEditText.setText("http://www.lemonde.fr/videos/rss_full.xml");
+        feedEditText.setText("http://www.lemonde.fr/rss/une.xml");
 
     }
 

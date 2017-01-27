@@ -21,11 +21,11 @@
     <string name="feed_add_failed">Impossible d\'ajouter le flux</string>
 
     <string name="user_preferences_title">@string/menu_settings</string>
-    <string name="user_offline_title">Mode Hors-ligne</string>
+    <string name="user_offline_title">Mode synchronisation</string>
     <string name="user_offline_description">Sauvegarder les nouvelles actualités dans cet appareil</string>
     <string name="user_offline_modes_title">Méthodes de synchronisation</string>
     <string name="user_offline_mode_0">Ne jamais synchroniser</string>
-    <string name="user_offline_mode_1">Me demander</string>
+    <string name="user_offline_mode_1">Me laisser le choix</string>
     <string name="user_offline_mode_2">Automatique, selon la connexion internet</string>
     <string name="user_offline_modes_description">Définir à quel moment les actualités se mettent à jour</string>
     <string name="user_delete_items_title">Effacer les actualités</string>
@@ -36,9 +36,12 @@
     <string name="channels_title">channels_title</string>
     <string name="channels_summary">channels_summary</string>
 
+    <string name="no_items">Aucune actualité n\'est présente sur ce flux pour le moment.</string>
+
     <string name="alert_dialog_ok">OK</string>
     <string name="alert_dialog_cancel">Fermer</string>
 
     <string name="database_error_occured">Une erreur est parvenue, réessayez&#8230;</string>
 
+    <string name="action_refresh">Rafraîchir</string>
 </resources>

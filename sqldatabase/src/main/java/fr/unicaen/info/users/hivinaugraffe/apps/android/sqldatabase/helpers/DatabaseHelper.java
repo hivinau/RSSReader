@@ -76,7 +76,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         columnsName = columnsName.substring(0, columnsName.length() - 1); //remove last ','
                     }
 
-                    String request = String.format("CREATE TABLE IF NOT EXISTS %s (%s)", tablename, columnsName);
+                    String request = String.format("CREATE TABLE IF NOT EXISTS %s (%s  NOT NULL DEFAULT '')", tablename, columnsName);
 
                     database.execSQL(request);
                 }

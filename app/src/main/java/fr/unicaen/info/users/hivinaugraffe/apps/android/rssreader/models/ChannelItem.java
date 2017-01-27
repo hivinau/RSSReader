@@ -2,7 +2,7 @@ package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models;
 
 import android.os.*;
 
-public class RSSItem extends RSS implements Parcelable {
+public class ChannelItem extends RSS implements Parcelable {
 
     public static final String CHANNEL = "url";
     public static final String LINK = "link";
@@ -18,19 +18,19 @@ public class RSSItem extends RSS implements Parcelable {
     public static final Creator<RSS> CREATOR = new Creator<RSS>() {
 
         @Override
-        public RSSItem createFromParcel(Parcel in) {
+        public ChannelItem createFromParcel(Parcel in) {
 
-            return new RSSItem(in);
+            return new ChannelItem(in);
         }
 
         @Override
-        public RSSItem[] newArray(int size) {
+        public ChannelItem[] newArray(int size) {
 
-            return new RSSItem[size];
+            return new ChannelItem[size];
         }
     };
 
-    public RSSItem(String title, String description, String date, String link, String channel, String guid, String image) {
+    public ChannelItem(String title, String description, String date, String link, String channel, String guid, String image) {
         super(title, description, date, link);
 
         this.channel = channel;
@@ -38,17 +38,17 @@ public class RSSItem extends RSS implements Parcelable {
         this.image = image;
     }
 
-    public RSSItem() {
+    public ChannelItem() {
         this(null, null, null, null, null, null, null);
 
     }
 
-    public RSSItem(RSSItem item) {
+    public ChannelItem(ChannelItem item) {
         this(item.title, item.description, item.date, item.link, item.channel, item.guid, item.image);
 
     }
 
-    public RSSItem(Parcel in) {
+    public ChannelItem(Parcel in) {
 
         title = in.readString();
         description = in.readString();

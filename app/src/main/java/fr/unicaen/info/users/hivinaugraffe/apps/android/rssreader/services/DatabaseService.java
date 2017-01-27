@@ -5,11 +5,10 @@ import android.os.*;
 import android.app.*;
 import android.content.*;
 import java.util.concurrent.*;
+import android.support.annotation.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.sqldatabase.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 
 public class DatabaseService extends BaseService {
 
@@ -31,299 +30,405 @@ public class DatabaseService extends BaseService {
 
     private final Semaphore semaphore = new Semaphore(1);
 
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            final String action = intent.getAction();
+
+            if(action != null) {
+
+                Bundle bundle;
+                Future<?> thread;
+                switch (action) {
+                    case Action.THROW_NEW_CHANNEL:
+
+                        bundle = intent.getExtras();
+
+                        if(bundle != null) {
+
+                            final Channel channel = bundle.getParcelable(BundleConstant.CHANNEL);
+
+                            if(channel != null) {
+
+                                thread = executor.submit(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+
+                                        try {
+
+                                            saveChannel(channel);
+
+                                        } catch (Exception exception) {
+
+                                            sendError(exception.getLocalizedMessage());
+                                        }
+                                    }
+                                });
+
+                                threads.add(thread);
+                            }
+                        }
+                        break;
+                    case Action.PULL_FEEDS:
+
+                        thread = executor.submit(new Runnable() {
+
+                            @Override
+                            public void run() {
+
+                                try {
+
+                                    Set<Channel> channels = fetchChannels(true);
+
+                                    for (Channel channel : channels) {
+
+                                        final Intent i = new Intent();
+
+                                        final Bundle b = new Bundle();
+
+                                        b.putParcelable(BundleConstant.CHANNEL, channel);
+
+                                        i.setAction(Action.THROW_CHANNEL);
+                                        i.putExtras(b);
+
+                                        sendBroadcast(i);
+                                    }
+
+                                } catch (Exception exception) {
+
+                                    sendError(exception.getLocalizedMessage());
+                                }
+                            }
+                        });
+
+                        threads.add(thread);
+
+                        break;
+                    case Action.PULL_CHANNELS:
+
+                        bundle = intent.getExtras();
+
+                        if(bundle != null) {
+
+                            final boolean forcing = bundle.getBoolean(BundleConstant.FORCE_REQUEST, false);
+
+                            thread = executor.submit(new Runnable() {
+
+                                @Override
+                                public void run() {
+
+                                    try {
+
+                                        Set<Channel> channels = fetchChannels(false);
+
+                                        for (Channel channel : channels) {
+
+                                            final Intent i = new Intent();
+
+                                            final Bundle b = new Bundle();
+                                            b.putParcelable(BundleConstant.CHANNEL, channel);
+                                            b.putBoolean(BundleConstant.FORCE_REQUEST, forcing);
+
+                                            i.setAction(Action.THROW_CHANNEL);
+                                            i.putExtras(b);
+
+                                            sendBroadcast(i);
+                                        }
+
+                                    } catch (Exception exception) {
+
+                                        sendError(exception.getLocalizedMessage());
+                                    }
+                                }
+                            });
+
+                            threads.add(thread);
+                        }
+                        break;
+                    case Action.CLEAR_ITEMS:
+
+                        bundle = intent.getExtras();
+
+                        if(bundle != null) {
+
+                            final String url = bundle.getString(BundleConstant.URL);
+
+                            if(url != null) {
+
+                                thread = executor.submit(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+
+                                        try {
+
+                                            deleteFromLink(DatabaseConstant.TABLE_ITEMS, DatabaseConstant.TABLE_COLUMN_CHANNEL, url);
+
+                                        } catch (Exception exception) {
+
+                                            sendError(exception.getLocalizedMessage());
+                                        }
+                                    }
+                                });
+
+                                threads.add(thread);
+                            }
+                        }
+                        break;
+                    case Action.DELETE_FEED:
+
+                        bundle = intent.getExtras();
+
+                        if(bundle != null) {
+
+                            final String url = bundle.getString(BundleConstant.URL);
+
+                            if(url != null) {
+
+                                thread = executor.submit(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+
+                                        try {
+
+                                            deleteFromLink(DatabaseConstant.TABLE_ITEMS, DatabaseConstant.TABLE_COLUMN_CHANNEL, url);
+                                            deleteFromLink(DatabaseConstant.TABLE_CHANNELS, DatabaseConstant.TABLE_COLUMN_LINK, url);
+
+                                            Thread delay = new Thread(new Runnable() {
+                                                @Override
+                                                public void run() {
+
+                                                    try {
+
+                                                        Thread.sleep(460);
+
+                                                        sendBroadcast(new Intent(Action.REFRESH));
+                                                    } catch (Exception ignored) {}
+                                                }
+                                            });
+
+                                            delay.setPriority(Thread.MAX_PRIORITY);
+                                            delay.setDaemon(true);
+                                            delay.setName(DatabaseService.class.getName());
+                                            delay.start();
+
+                                        } catch (Exception exception) {
+
+                                            sendError(exception.getLocalizedMessage());
+                                        }
+                                    }
+                                });
+
+                                threads.add(thread);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
+
     @Override
     public void onCreate() {
         super.onCreate();
 
         binder = new DatabaseBinder(this);
+
+        filter.addAction(Action.THROW_NEW_CHANNEL);
+        filter.addAction(Action.PULL_FEEDS);
+        filter.addAction(Action.PULL_CHANNELS);
+        filter.addAction(Action.CLEAR_ITEMS);
+        filter.addAction(Action.DELETE_FEED);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        if(intent != null) {
-
-            String action = intent.getAction();
-
-            Runnable runnable;
-
-            Bundle bundle;
-
-            switch (action) {
-
-                case Action.DATABASE_REQUESTED_TO_PUSH_ITEM:
-
-                    bundle = intent.getExtras();
-
-                    if(bundle != null) {
-
-                        final RSSItem item = bundle.getParcelable(BundleConstant.ITEM_TO_PUSH_ON_DATABASE);
-
-                        if (item != null) {
-
-                            runnable = new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    try {
-
-                                        addItem(item);
-
-                                    } catch (Exception exception) {
-
-                                        sendError(exception.getLocalizedMessage());
-                                    }
-                                }
-                            };
-
-                            run(runnable);
-                        }
-                    }
-
-                    break;
-                case Action.DATABASE_REQUESTED_TO_PULL_ITEM:
-
-                    runnable = new Runnable() {
-                        @Override
-                        public void run() {
-
-                            try {
-
-                                listItems();
-
-                            } catch (Exception exception) {
-
-                                sendError(exception.getLocalizedMessage());
-                            }
-                        }
-                    };
-
-                    run(runnable);
-                    break;
-                case Action.DATABASE_REQUESTED_TO_REMOVE_ITEM:
-
-                    bundle = intent.getExtras();
-
-                    if(bundle != null) {
-
-                        final RSSItem item = bundle.getParcelable(BundleConstant.ITEM);
-
-                        if (item != null) {
-
-                            runnable = new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    try {
-
-                                        removeItem(item);
-
-                                    } catch (Exception exception) {
-
-                                        sendError(exception.getLocalizedMessage());
-                                    }
-                                }
-                            };
-
-                            run(runnable);
-                        }
-                    }
-
-                    break;
-                case Action.DATABASE_REQUESTED_TO_CLEAR_ITEMS:
-
-                    runnable = new Runnable() {
-                        @Override
-                        public void run() {
-
-                            try {
-
-                                clearItems();
-
-                            } catch (Exception exception) {
-
-                                sendError(exception.getLocalizedMessage());
-                            }
-                        }
-                    };
-
-                    run(runnable);
-                    break;
-                default:
-                    break;
-            }
-        }
-
         return Service.START_STICKY;
     }
 
-    private Map<String, String> mapItem(RSSItem item)  {
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
 
-        Map<String, String> map = new HashMap<>();
+        registerReceiver(broadcastReceiver, filter);
 
-        String title = item.getTitle();
-        if(title != null) {
-
-            map.put(DatabaseConstant.TABLE_COLUMN_TITLE, item.getTitle());
-        }
-
-        String description = item.getDescription();
-        if(title != null) {
-
-            map.put(DatabaseConstant.TABLE_COLUMN_DESCRIPTION, description);
-        }
-
-        String date = item.getDate();
-        if(title != null) {
-
-            map.put(DatabaseConstant.TABLE_COLUMN_DATE, date);
-        }
-
-        String link = item.getLink();
-        if(title != null) {
-
-            map.put(DatabaseConstant.TABLE_COLUMN_LINK, link);
-        }
-
-        String guid = item.getGuid();
-        if(title != null) {
-
-            map.put(DatabaseConstant.TABLE_COLUMN_GUID, guid);
-        }
-
-        return map;
+        return super.onBind(intent);
     }
 
-    private void addItem(RSSItem item) throws Exception {
+    @Override
+    public boolean onUnbind(Intent intent) {
+
+        unregisterReceiver(broadcastReceiver);
+
+        return super.onUnbind(intent);
+    }
+
+    private void saveChannel(Channel channel) throws Exception {
 
         semaphore.acquire();
 
-        EventManager manager = DatabaseManager.getInstance();
+        DatabaseManager.getInstance().open();
 
-        manager.open();
+        DatabaseManager.getInstance().pushData(DatabaseConstant.TABLE_CHANNELS, parseChannel(channel));
 
-        Map<String, String> map = mapItem(item);
-        manager.pushData(DatabaseConstant.TABLE_ITEMS, map);
+        List<Item> items = channel.getItems();
 
-        manager.close();
+        for(Item item: items) {
+
+            item.setChannel(channel.getLink());
+            DatabaseManager.getInstance().pushData(DatabaseConstant.TABLE_ITEMS, parseItem(item));
+        }
+
+        DatabaseManager.getInstance().close();
 
         semaphore.release();
     }
 
-    private void removeItem(RSSItem item) throws Exception {
+    private Map<String, String> parseChannel(Channel channel) {
 
-        semaphore.acquire();
+        Map<String, String> parse = new HashMap<>();
 
-        EventManager manager = DatabaseManager.getInstance();
+        parse.put(DatabaseConstant.TABLE_COLUMN_TITLE, channel.getTitle());
+        parse.put(DatabaseConstant.TABLE_COLUMN_DATE, channel.getDate());
+        parse.put(DatabaseConstant.TABLE_COLUMN_DESCRIPTION, channel.getDescription());
+        parse.put(DatabaseConstant.TABLE_COLUMN_LINK, channel.getLink());
 
-        manager.open();
-
-        Map<String, String> map = mapItem(item);
-        manager.dropData(DatabaseConstant.TABLE_ITEMS, map);
-
-        manager.close();
-
-        semaphore.release();
+        return parse;
     }
 
-    private void listItems() throws Exception {
+    private Map<String, String> parseItem(Item item) {
+
+        Map<String, String> parse = new HashMap<>();
+
+        parse.put(DatabaseConstant.TABLE_COLUMN_TITLE, item.getTitle());
+        parse.put(DatabaseConstant.TABLE_COLUMN_DATE, item.getDate());
+        parse.put(DatabaseConstant.TABLE_COLUMN_DESCRIPTION, item.getDescription());
+        parse.put(DatabaseConstant.TABLE_COLUMN_LINK, item.getLink());
+        parse.put(DatabaseConstant.TABLE_COLUMN_GUID, item.getGuid());
+        parse.put(DatabaseConstant.TABLE_COLUMN_CHANNEL, item.getChannel());
+
+        return parse;
+    }
+
+    private Set<Channel> fetchChannels(boolean fetchingItems) throws Exception {
 
         semaphore.acquire();
 
-        EventManager manager = DatabaseManager.getInstance();
+        DatabaseManager.getInstance().open();
 
-        manager.open();
+        Set<Channel> channels = new HashSet<>();
 
-        List<Map<String, String>> maps =  manager.pullData(DatabaseConstant.TABLE_ITEMS);
+        List<Map<String, String>> channelsMapped = DatabaseManager.getInstance().pullData(DatabaseConstant.TABLE_CHANNELS);
 
-        if(maps.size() > 0) {
+        for(Map<String, String> channelMapped: channelsMapped) {
 
-            for(Map<String, String> map: maps) {
+            Channel channel = new Channel();
 
-                RSSItem item = new RSSItem();
+            for(Map.Entry<String, String> entry: channelMapped.entrySet()) {
 
-                for(Map.Entry<String, String> entry: map.entrySet()) {
+                final String key = entry.getKey();
+                final String value = entry.getValue();
 
-                    final String key = entry.getKey();
-                    final String value = entry.getValue();
+                switch (key) {
+                    case DatabaseConstant.TABLE_COLUMN_TITLE:
 
-                    switch (key) {
-                        case DatabaseConstant.TABLE_COLUMN_TITLE:
+                        channel.setTitle(value);
+                        break;
+                    case DatabaseConstant.TABLE_COLUMN_DATE:
 
-                            item.setTitle(value);
-                            break;
-                        case DatabaseConstant.TABLE_COLUMN_DESCRIPTION:
+                        channel.setDate(value);
+                        break;
+                    case DatabaseConstant.TABLE_COLUMN_DESCRIPTION:
 
-                            item.setDescription(value);
-                            break;
-                        case DatabaseConstant.TABLE_COLUMN_DATE:
+                        channel.setDescription(value);
+                        break;
+                    case DatabaseConstant.TABLE_COLUMN_LINK:
 
-                            item.setDate(value);
-                            break;
-                        case DatabaseConstant.TABLE_COLUMN_LINK:
-
-                            item.setLink(value);
-                            break;
-                        case DatabaseConstant.TABLE_COLUMN_GUID:
-
-                            item.setGuid(value);
-                            break;
-                        default:
-                            break;
-                    }
+                        channel.setLink(value);
+                        break;
+                    default:
+                        break;
                 }
-
-                sendItem(item);
             }
+
+            if(fetchingItems) {
+
+                List<Map<String, String>> itemsMapped = DatabaseManager.getInstance().rawQuery("SELECT * FROM " + DatabaseConstant.TABLE_ITEMS + " WHERE " + DatabaseConstant.TABLE_COLUMN_CHANNEL + " = '" + channel.getLink() + "'", null);
+
+                for(Map<String, String> itemMapped: itemsMapped) {
+
+                    Item item = new Item();
+
+                    for(Map.Entry<String, String> entry: itemMapped.entrySet()) {
+
+                        final String key = entry.getKey();
+                        final String value = entry.getValue();
+
+                        switch (key) {
+                            case DatabaseConstant.TABLE_COLUMN_TITLE:
+
+                                item.setTitle(value);
+                                break;
+                            case DatabaseConstant.TABLE_COLUMN_DATE:
+
+                                item.setDate(value);
+                                break;
+                            case DatabaseConstant.TABLE_COLUMN_DESCRIPTION:
+
+                                item.setDescription(value);
+                                break;
+                            case DatabaseConstant.TABLE_COLUMN_LINK:
+
+                                item.setLink(value);
+                                break;
+                            case DatabaseConstant.TABLE_COLUMN_GUID:
+
+                                item.setGuid(value);
+                                break;
+                            case DatabaseConstant.TABLE_COLUMN_CHANNEL:
+
+                                item.setChannel(value);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    channel.addItem(item);
+                }
+            }
+
+            channels.add(channel);
         }
 
-        manager.close();
+        DatabaseManager.getInstance().close();
 
         semaphore.release();
+
+        return channels;
     }
 
-    private void clearItems() throws Exception {
+    private void deleteFromLink(String tablename, String column, String url) throws Exception {
 
         semaphore.acquire();
 
-        EventManager manager = DatabaseManager.getInstance();
+        DatabaseManager.getInstance().open();
 
-        manager.open();
+        Map<String, String> arguments = new HashMap<>();
 
-        manager.drop();
+        arguments.put(column, url);
 
-        sendDroppedAction();
+        DatabaseManager.getInstance().dropData(tablename, arguments);
 
-        manager.close();
+        DatabaseManager.getInstance().close();
 
         semaphore.release();
-    }
-
-    private void sendItem(RSSItem item) {
-
-        Bundle bundle = new Bundle();
-        bundle.putParcelable(BundleConstant.ITEM, item);
-        bundle.putString(BundleConstant.ITEM_SOURCE, DatabaseService.class.getName());
-
-        IntentHelper.sendToActivity(context, MainActivity.class, Action.THROW_ITEM, bundle);
-    }
-
-    private void sendError(String error) {
-
-        Bundle bundle = new Bundle();
-        bundle.putString(BundleConstant.ERROR_OCCURED, error);
-
-        IntentHelper.sendToActivity(context, MainActivity.class, Action.THROW_ERROR, bundle);
-    }
-
-    private void sendDroppedAction() {
-
-        IntentHelper.sendToActivity(context, MainActivity.class, Action.THROW_DATABASE_DROPPED_STATE, null);
-    }
-
-    private void run(Runnable runnable) {
-
-        Future<?> thread = executor.submit(runnable);
-        threads.add(thread);
     }
 }

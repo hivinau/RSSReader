@@ -1,9 +1,7 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models;
 
+import java.util.*;
 import android.os.*;
-
-import java.nio.channels.Channel;
-import java.util.Locale;
 
 public class RSSChannel extends RSS implements Parcelable {
 
@@ -13,6 +11,8 @@ public class RSSChannel extends RSS implements Parcelable {
     public static final String TITLE = "title";
     public static final String DESCRIPTION = "description";
     public static final String DATE = "pubDate";
+
+    private final Set<ChannelItem> items;
 
     public static final Parcelable.Creator<RSS> CREATOR = new Parcelable.Creator<RSS>() {
 
@@ -32,6 +32,7 @@ public class RSSChannel extends RSS implements Parcelable {
     public RSSChannel(String title, String description, String date, String link) {
         super(title, description, date, link);
 
+        items = new HashSet<>();
     }
 
     public RSSChannel() {
@@ -39,17 +40,24 @@ public class RSSChannel extends RSS implements Parcelable {
 
     }
 
-    public RSSChannel(RSSItem RSSItem) {
+    public RSSChannel(ChannelItem RSSItem) {
         this(RSSItem.title, RSSItem.description, RSSItem.date, RSSItem.link);
 
     }
 
     public RSSChannel(Parcel in) {
+        this(in.readString(), in.readString(), in.readString(), in.readString());
 
-        title = in.readString();
-        description = in.readString();
-        date = in.readString();
-        link = in.readString();
+        Object[] objects = in.readArray(ChannelItem.class.getClassLoader());
+
+        if(objects != null) {
+
+            for(Object object: objects) {
+
+                items.add((ChannelItem) object);
+            }
+        }
+
     }
 
     @Override
@@ -125,6 +133,21 @@ public class RSSChannel extends RSS implements Parcelable {
         return representation;
     }
 
+    public void addItem(ChannelItem item) {
+
+        items.add(item);
+    }
+
+    public void removeItem(ChannelItem item) {
+
+        items.remove(item);
+    }
+
+    public ChannelItem[] getItems() {
+
+        return items.toArray(new ChannelItem[items.size()]);
+    }
+
     @Override
     public int describeContents() {
 
@@ -138,6 +161,7 @@ public class RSSChannel extends RSS implements Parcelable {
         dest.writeString(description);
         dest.writeString(date);
         dest.writeString(link);
+        dest.writeArray(items.toArray());
     }
 
     public static RSSChannel valueOf(String channelString) {

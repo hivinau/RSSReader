@@ -5,23 +5,18 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <RelativeLayout
-        android:id="@+id/welcome_relative_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <TextView
+        android:id="@+id/no_items_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="10dp"
+        android:text="@string/no_items"
+        android:textColor="@color/no_items"
+        android:textSize="@dimen/add_feed"
         android:gravity="center"
-        android:visibility="visible">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/add_feed"
-            android:textColor="@color/add_item"
-            android:textSize="@dimen/add_feed"
-            android:gravity="center"
-            android:minLines="2"/>
-
-    </RelativeLayout>
+        android:minLines="2"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/items_recycler_view"

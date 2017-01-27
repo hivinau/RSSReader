@@ -2,15 +2,14 @@ package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.fragments;
 
 import android.os.*;
 import android.view.*;
+import android.content.*;
 import android.support.v4.app.*;
 import android.support.v4.view.*;
 import android.support.annotation.*;
 import android.support.design.widget.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.R;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.services.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.controllers.*;
 
 public class Feeds extends Fragment {
@@ -18,23 +17,65 @@ public class Feeds extends Fragment {
     private TabLayout tabLayout = null;
     private ViewPager viewPager = null;
     private RSSPagerAdapter adapter = null;
+    private IntentFilter filter = null;
 
-    private final Handler handler = new Handler(Looper.getMainLooper()) {
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 
         @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
+        public void onReceive(Context context, Intent intent) {
 
-            switch (msg.what) {
-                case HandlerConstant.ITEM_AVAILABLE:
+            String action = intent.getAction();
 
-                    if(msg.obj != null && msg.obj instanceof String) {
+            if(action != null) {
 
-                        adapter.addChannel((String) msg.obj);
+                if (action.equals(Action.THROW_NEW_CHANNEL) || action.equals(Action.THROW_CHANNEL)) {
+
+                    Bundle bundle = intent.getExtras();
+
+                    if (bundle != null) {
+
+                        final Channel channel = bundle.getParcelable(BundleConstant.CHANNEL);
+                        boolean forcing = bundle.getBoolean(BundleConstant.FORCE_REQUEST, false);
+
+                        if (channel != null) {
+
+                            SharedPreferences preferences = android.preference.PreferenceManager.getDefaultSharedPreferences(getActivity());
+                            boolean offline = preferences.getBoolean("user_offline", false);
+                            String value = preferences.getString("user_update_mode", "0");
+
+                            if (offline && (forcing || value.equals("2"))) {
+
+                                String link = channel.getLink();
+
+                                if (link != null) {
+
+                                    intent = new Intent();
+
+                                    bundle = new Bundle();
+                                    bundle.putString(BundleConstant.URL, link);
+
+                                    intent.setAction(Action.HTTP_REQUEST_WITH_URL);
+                                    intent.putExtras(bundle);
+
+                                    getActivity().sendBroadcast(intent);
+                                }
+                            }
+
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    adapter.addChannel(channel);
+                                    tabLayout.setVisibility(View.VISIBLE);
+                                }
+                            });
+                        }
                     }
-                    break;
-                default:
-                    break;
+                } else if(action.equals(Action.REFRESH)) {
+
+                    adapter.removeAll();
+                    tabLayout.setVisibility(View.GONE);
+                }
             }
         }
     };
@@ -60,14 +101,10 @@ public class Feeds extends Fragment {
 
         adapter = new RSSPagerAdapter(getChildFragmentManager());
 
-        ((MainActivity) getActivity()).setHandler(handler);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        //IntentHelper.sentToService(getActivity(), DatabaseService.class, Action.DATABASE_REQUESTED_TO_PULL_ITEM, null);
+        filter = new IntentFilter();
+        filter.addAction(Action.THROW_NEW_CHANNEL);
+        filter.addAction(Action.THROW_CHANNEL);
+        filter.addAction(Action.REFRESH);
     }
 
     @Override
@@ -76,6 +113,27 @@ public class Feeds extends Fragment {
 
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
+        tabLayout.setVisibility(View.GONE);
+
+        getActivity().registerReceiver(broadcastReceiver, filter);
+
+        Thread delay = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+
+                    Thread.sleep(460);
+
+                    getActivity().sendBroadcast(new Intent(Action.PULL_FEEDS));
+                } catch (Exception ignored) {}
+            }
+        });
+
+        delay.setPriority(Thread.MAX_PRIORITY);
+        delay.setDaemon(true);
+        delay.setName(Feeds.class.getName());
+        delay.start();
     }
 
     @Override
@@ -84,5 +142,7 @@ public class Feeds extends Fragment {
 
         viewPager.setAdapter(null);
         tabLayout.setupWithViewPager(null);
+
+        getActivity().unregisterReceiver(broadcastReceiver);
     }
 }

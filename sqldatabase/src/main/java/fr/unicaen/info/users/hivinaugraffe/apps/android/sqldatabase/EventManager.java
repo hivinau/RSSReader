@@ -54,7 +54,6 @@ public class EventManager implements IDatabaseManager {
 
                 String tablename = databaseHelper.getDatabaseHelperListener().tablename(database, index);
 
-                //database.delete(tablename, null, null);
                 databaseHelper.dropTable(database);
 
                 ((EventManagerListener) databaseHelper.getDatabaseHelperListener()).tableDropped(database, tablename);
@@ -103,6 +102,7 @@ public class EventManager implements IDatabaseManager {
         } catch (Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
+            database.close();
 
         } finally {
 
@@ -124,7 +124,7 @@ public class EventManager implements IDatabaseManager {
 
         try {
 
-            cursor = database.rawQuery(request, null);
+            cursor = database.rawQuery(request, args);
 
             if(cursor != null) {
 
@@ -154,6 +154,7 @@ public class EventManager implements IDatabaseManager {
         } catch (Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
+            database.close();
 
         } finally {
 
@@ -182,14 +183,7 @@ public class EventManager implements IDatabaseManager {
                     String key = entry.getKey();
                     String value = entry.getValue();
 
-                    if(value != null) {
-
-                        contentValues.put(key, value);
-                    } else {
-
-                        String message = String.format("Value for '%s' must be not null", key);
-                        databaseHelper.getDatabaseHelperListener().onFailure(database, new Exception(message));
-                    }
+                    contentValues.put(key, value);
                 }
 
                 id = database.replace(tablename, null, contentValues);
@@ -204,6 +198,7 @@ public class EventManager implements IDatabaseManager {
         } catch(Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
+            database.close();
         }
 
         return id;
@@ -247,6 +242,7 @@ public class EventManager implements IDatabaseManager {
         } catch (Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
+            database.close();
 
         } finally {
 

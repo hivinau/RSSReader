@@ -1,16 +1,17 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.services;
 
 import java.io.*;
-import java.util.*;
 import android.os.*;
 import android.app.*;
 import android.content.*;
+import android.support.annotation.Nullable;
+
 import java.util.concurrent.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.*;
-import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.models.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.androidhttpclient.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.androidhttpclient.events.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.androidhttpclient.listeners.*;
@@ -71,11 +72,41 @@ public class RssRequestService extends BaseService implements SaxHandler.Element
         }
     };
 
+    private BroadcastReceiver urlReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            String action = intent.getAction();
+
+            if(action != null && action.equals(Action.HTTP_REQUEST_WITH_URL)) {
+
+                Bundle bundle = intent.getExtras();
+
+                if(bundle != null) {
+
+                    String url = bundle.getString(BundleConstant.URL);
+
+                    if(url != null) {
+
+                        HttpClient client = new HttpClient(RssRequestService.this.context, url, HttpClient.GET);
+                        client.setListener(httpListener);
+
+                        Future<?> thread = executor.submit(client);
+                        threads.add(thread);
+                    }
+                }
+            }
+        }
+    };
+
     @Override
     public void onCreate() {
         super.onCreate();
 
         binder = new RssBinder(this);
+
+        filter.addAction(Action.HTTP_REQUEST_WITH_URL);
     }
 
     @Override
@@ -109,103 +140,35 @@ public class RssRequestService extends BaseService implements SaxHandler.Element
         return Service.START_STICKY;
     }
 
+    @Nullable
     @Override
-    public void onChannelParsed(Map<String, String> content) {
+    public IBinder onBind(Intent intent) {
 
-        if(content.size() > 0) {
+        registerReceiver(urlReceiver, filter);
 
-            RSSChannel channel = new RSSChannel();
-
-            for(Map.Entry<String, String> entry: content.entrySet()) {
-
-                final String node = entry.getKey();
-                final String value = entry.getValue();
-
-                if(node.equalsIgnoreCase(RSSChannel.TITLE)) {
-
-                    channel.setTitle(value);
-
-                } else if(node.equalsIgnoreCase(RSSChannel.DESCRIPTION)) {
-
-                    channel.setDescription(value);
-
-                } else if(node.equalsIgnoreCase(RSSChannel.DATE)) {
-
-                    channel.setDate(value);
-
-                } else if(node.equalsIgnoreCase(RSSChannel.LINK)) {
-
-                    channel.setLink(value);
-                }
-            }
-
-            sendChannel(channel);
-        }
+        return super.onBind(intent);
     }
 
     @Override
-    public void onItemParsed(Map<String, String> channel, Map<String, String> item) {
+    public boolean onUnbind(Intent intent) {
 
-        if(channel.size() > 0 && item.size() > 0) {
+        unregisterReceiver(urlReceiver);
 
-            RSSItem rssItem = new RSSItem();
-
-            rssItem.setChannel(channel.get(RSSItem.CHANNEL));
-
-            for(Map.Entry<String, String> entry: item.entrySet()) {
-
-                final String node = entry.getKey();
-                final String value = entry.getValue();
-
-                if(node.equalsIgnoreCase(RSSItem.TITLE)) {
-
-                    rssItem.setTitle(value);
-
-                } else if(node.equalsIgnoreCase(RSSItem.DESCRIPTION)) {
-
-                    rssItem.setDescription(value);
-
-                } else if(node.equalsIgnoreCase(RSSItem.DATE)) {
-
-                    rssItem.setDate(value);
-
-                } else if(node.equalsIgnoreCase(RSSItem.LINK)) {
-
-                    rssItem.setLink(value);
-
-                } else if(node.equalsIgnoreCase(RSSItem.GUID)) {
-
-                    rssItem.setGuid(value);
-                }
-            }
-
-            sendItem(rssItem);
-        }
+        return super.onUnbind(intent);
     }
 
-    private void sendChannel(RSSChannel channel) {
+    @Override
+    public void onParsingFinished(Channel channel) {
+
+        Intent intent = new Intent();
 
         Bundle bundle = new Bundle();
         bundle.putParcelable(BundleConstant.CHANNEL, channel);
 
-        IntentHelper.sendToActivity(context, MainActivity.class, Action.THROW_CHANNEL, bundle);
-    }
+        intent.setAction(Action.THROW_NEW_CHANNEL);
+        intent.putExtras(bundle);
 
-    private void sendItem(RSSItem item) {
-
-        Bundle bundle = new Bundle();
-        bundle.putParcelable(BundleConstant.ITEM, item);
-        bundle.putString(BundleConstant.ITEM_SOURCE, RssRequestService.class.getName());
-
-        IntentHelper.sendToActivity(context, MainActivity.class, Action.THROW_ITEM, bundle);
-    }
-
-    private void sendError(String error) {
-
-        Bundle bundle = new Bundle();
-        bundle.putString(BundleConstant.ERROR_OCCURED, error);
-
-        IntentHelper.sendToActivity(context, MainActivity.class, Action.THROW_ERROR, bundle);
+        sendBroadcast(intent);
     }
 
 }

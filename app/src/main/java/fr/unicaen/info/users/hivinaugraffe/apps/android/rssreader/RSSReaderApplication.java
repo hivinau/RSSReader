@@ -51,11 +51,6 @@ public class RSSReaderApplication extends Application {
 
                 columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_CHANNEL, "TEXT"));
                 columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_GUID, "TEXT"));
-                columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_IMAGE, "TEXT"));
-
-            } else {
-
-                columns.add(new TableColumn(DatabaseConstant.TABLE_COLUMN_COPYRIGHT, "TEXT"));
             }
 
             return columns;

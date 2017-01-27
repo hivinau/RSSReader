@@ -6,6 +6,7 @@ import android.app.*;
 import android.content.*;
 import java.util.concurrent.*;
 import android.support.annotation.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
 
 public class BaseService extends Service {
 
@@ -16,6 +17,7 @@ public class BaseService extends Service {
     protected List<Future<?>> threads;
     protected IBinder binder = null;
     protected Context context = null;
+    protected IntentFilter filter = null;
 
     @Override
     public void onCreate() {
@@ -26,6 +28,8 @@ public class BaseService extends Service {
                 1000, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>());
         threads = new ArrayList<>();
+
+        filter = new IntentFilter();
     }
 
     @Nullable
@@ -57,5 +61,18 @@ public class BaseService extends Service {
     public void setContext(Context context) {
 
         this.context = context;
+    }
+
+    protected void sendError(String error) {
+
+        Intent intent = new Intent();
+
+        Bundle bundle = new Bundle();
+        bundle.putString(BundleConstant.ERROR, error);
+
+        intent.setAction(Action.THROW_ERROR);
+        intent.putExtras(bundle);
+
+        sendBroadcast(intent);
     }
 }
