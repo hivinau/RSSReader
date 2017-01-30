@@ -38,8 +38,8 @@ public class Channel extends RSSBase implements Parcelable {
 
     }
 
-    public Channel(Item item) {
-        this(item.title, item.description, item.date, item.link);
+    public Channel(Channel channel) {
+        this(channel.title, channel.description, channel.date, channel.link);
 
     }
 
@@ -77,6 +77,61 @@ public class Channel extends RSSBase implements Parcelable {
         }
 
         return items;
+    }
+
+    @Override
+    public int hashCode() {
+
+        int titleLength = title != null ? title.length() : 2;
+        int dateLength = date != null ? date.length() : 1;
+        int descriptionLength = description != null ? description.length() : 0;
+
+        return (titleLength + dateLength) * descriptionLength + 10;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        boolean same = false;
+
+        try {
+
+            semaphore.acquire();
+
+            if(obj instanceof Channel) {
+
+                Channel channel = (Channel) obj;
+
+                if(title != null) {
+
+                    same = title.equalsIgnoreCase(channel.title);
+                }
+
+                if(description != null) {
+
+                    same = same && description.equalsIgnoreCase(channel.description);
+                }
+
+                if(date != null) {
+
+                    same = same && date.equalsIgnoreCase(channel.date);
+                }
+
+                if(link != null) {
+
+                    same = same && link.equalsIgnoreCase(channel.link);
+                }
+
+                same = same && items.size() == channel.getItems().size();
+            }
+
+        } catch (Exception ignored) { }
+        finally {
+
+            semaphore.release();
+        }
+
+        return same;
     }
 
     @Override

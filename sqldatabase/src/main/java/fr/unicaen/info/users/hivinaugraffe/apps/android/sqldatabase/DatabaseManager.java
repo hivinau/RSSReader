@@ -1,6 +1,5 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.sqldatabase;
 
-import java.util.*;
 import android.content.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.sqldatabase.listeners.*;
 

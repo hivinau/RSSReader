@@ -51,6 +51,59 @@ public class Item extends RSSBase implements Parcelable {
     }
 
     @Override
+    public int hashCode() {
+
+        int titleLength = title != null ? title.length() : 2;
+        int dateLength = date != null ? date.length() : 1;
+        int descriptionLength = description != null ? description.length() : 0;
+
+        return (titleLength + dateLength) * descriptionLength + 10;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        boolean same = false;
+
+        try {
+
+            semaphore.acquire();
+
+            if(obj instanceof Item) {
+
+                Item item = (Item) obj;
+
+                if(title != null) {
+
+                    same = title.equalsIgnoreCase(item.title);
+                }
+
+                if(description != null) {
+
+                    same = same && description.equalsIgnoreCase(item.description);
+                }
+
+                if(date != null) {
+
+                    same = same && date.equalsIgnoreCase(item.date);
+                }
+
+                if(link != null) {
+
+                    same = same && link.equalsIgnoreCase(item.link);
+                }
+            }
+
+        } catch (Exception ignored) { }
+        finally {
+
+            semaphore.release();
+        }
+
+        return same;
+    }
+
+    @Override
     public int describeContents() {
 
         return 0;

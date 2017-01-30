@@ -1,5 +1,7 @@
 package fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models;
 
+import java.util.concurrent.Semaphore;
+
 public class RSSBase {
 
     protected int id;
@@ -7,6 +9,8 @@ public class RSSBase {
     protected String description = null;
     protected String date = null;
     protected String link = null;
+
+    protected final Semaphore semaphore = new Semaphore(1);
 
     public RSSBase(String title, String description, String date, String link) {
 
@@ -24,49 +28,6 @@ public class RSSBase {
     public RSSBase(RSSBase base) {
         this(base.title, base.description, base.date, base.link);
 
-    }
-
-    @Override
-    public int hashCode() {
-
-        int titleLength = title != null ? title.length() : 2;
-        int dateLength = date != null ? date.length() : 1;
-        int descriptionLength = description != null ? description.length() : 0;
-
-        return (titleLength + dateLength) * descriptionLength + 10;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-
-        boolean same = false;
-
-        if(obj instanceof RSSBase) {
-
-            RSSBase base = (RSSBase) obj;
-
-            if(title != null) {
-
-                same = title.equals(base.title);
-            }
-
-            if(description != null) {
-
-                same = same && description.equals(base.description);
-            }
-
-            if(date != null) {
-
-                same = same && date.equals(base.date);
-            }
-
-            if(link != null) {
-
-                same = same && link.equals(base.link);
-            }
-        }
-
-        return same;
     }
 
     public int getId() {

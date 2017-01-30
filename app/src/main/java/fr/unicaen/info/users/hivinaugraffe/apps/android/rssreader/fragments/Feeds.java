@@ -71,10 +71,6 @@ public class Feeds extends Fragment {
                             });
                         }
                     }
-                } else if(action.equals(Action.REFRESH)) {
-
-                    adapter.removeAll();
-                    tabLayout.setVisibility(View.GONE);
                 }
             }
         }

@@ -56,14 +56,18 @@ public class DatabaseService extends BaseService {
 
                                     @Override
                                     public void run() {
-
                                         try {
+
+                                            semaphore.acquire();
 
                                             saveChannel(channel);
 
                                         } catch (Exception exception) {
 
                                             sendError(exception.getLocalizedMessage());
+                                        } finally {
+
+                                            semaphore.release();
                                         }
                                     }
                                 });
@@ -80,6 +84,8 @@ public class DatabaseService extends BaseService {
                             public void run() {
 
                                 try {
+
+                                    semaphore.acquire();
 
                                     Set<Channel> channels = fetchChannels(true);
 
@@ -100,6 +106,9 @@ public class DatabaseService extends BaseService {
                                 } catch (Exception exception) {
 
                                     sendError(exception.getLocalizedMessage());
+                                } finally {
+
+                                    semaphore.release();
                                 }
                             }
                         });
@@ -122,6 +131,8 @@ public class DatabaseService extends BaseService {
 
                                     try {
 
+                                        semaphore.acquire();
+
                                         Set<Channel> channels = fetchChannels(false);
 
                                         for (Channel channel : channels) {
@@ -141,6 +152,9 @@ public class DatabaseService extends BaseService {
                                     } catch (Exception exception) {
 
                                         sendError(exception.getLocalizedMessage());
+                                    } finally {
+
+                                        semaphore.release();
                                     }
                                 }
                             });
@@ -165,11 +179,16 @@ public class DatabaseService extends BaseService {
 
                                         try {
 
+                                            semaphore.acquire();
+
                                             deleteFromLink(DatabaseConstant.TABLE_ITEMS, DatabaseConstant.TABLE_COLUMN_CHANNEL, url);
 
                                         } catch (Exception exception) {
 
                                             sendError(exception.getLocalizedMessage());
+                                        } finally {
+
+                                            semaphore.release();
                                         }
                                     }
                                 });
@@ -195,6 +214,8 @@ public class DatabaseService extends BaseService {
 
                                         try {
 
+                                            semaphore.acquire();
+
                                             deleteFromLink(DatabaseConstant.TABLE_ITEMS, DatabaseConstant.TABLE_COLUMN_CHANNEL, url);
                                             deleteFromLink(DatabaseConstant.TABLE_CHANNELS, DatabaseConstant.TABLE_COLUMN_LINK, url);
 
@@ -219,6 +240,9 @@ public class DatabaseService extends BaseService {
                                         } catch (Exception exception) {
 
                                             sendError(exception.getLocalizedMessage());
+                                        } finally {
+
+                                            semaphore.release();
                                         }
                                     }
                                 });
@@ -272,10 +296,6 @@ public class DatabaseService extends BaseService {
 
     private void saveChannel(Channel channel) throws Exception {
 
-        semaphore.acquire();
-
-        DatabaseManager.getInstance().open();
-
         DatabaseManager.getInstance().pushData(DatabaseConstant.TABLE_CHANNELS, parseChannel(channel));
 
         List<Item> items = channel.getItems();
@@ -285,10 +305,6 @@ public class DatabaseService extends BaseService {
             item.setChannel(channel.getLink());
             DatabaseManager.getInstance().pushData(DatabaseConstant.TABLE_ITEMS, parseItem(item));
         }
-
-        DatabaseManager.getInstance().close();
-
-        semaphore.release();
     }
 
     private Map<String, String> parseChannel(Channel channel) {
@@ -318,10 +334,6 @@ public class DatabaseService extends BaseService {
     }
 
     private Set<Channel> fetchChannels(boolean fetchingItems) throws Exception {
-
-        semaphore.acquire();
-
-        DatabaseManager.getInstance().open();
 
         Set<Channel> channels = new HashSet<>();
 
@@ -408,27 +420,15 @@ public class DatabaseService extends BaseService {
             channels.add(channel);
         }
 
-        DatabaseManager.getInstance().close();
-
-        semaphore.release();
-
         return channels;
     }
 
     private void deleteFromLink(String tablename, String column, String url) throws Exception {
-
-        semaphore.acquire();
-
-        DatabaseManager.getInstance().open();
 
         Map<String, String> arguments = new HashMap<>();
 
         arguments.put(column, url);
 
         DatabaseManager.getInstance().dropData(tablename, arguments);
-
-        DatabaseManager.getInstance().close();
-
-        semaphore.release();
     }
 }

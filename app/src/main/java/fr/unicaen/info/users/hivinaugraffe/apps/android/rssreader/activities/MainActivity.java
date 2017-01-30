@@ -124,12 +124,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         boolean offline = preferences.getBoolean("user_offline", false);
+        String value = preferences.getString("user_update_mode", "0");
 
-        if(offline) {
-
-            String value = preferences.getString("user_update_mode", "0");
-            menu.findItem(R.id.refresh).setVisible(value.equals("1"));
-        }
+        menu.findItem(R.id.refresh).setVisible(offline && value.equals("1"));
 
         return super.onPrepareOptionsMenu(menu);
     }

@@ -9,18 +9,21 @@ import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 
 public class RSSPagerAdapter extends FragmentStatePagerAdapter {
 
-    private final Set<Channel> channels;
+    private final List<Channel> channels;
 
     public RSSPagerAdapter(FragmentManager manager) {
         super(manager);
 
-        channels = new HashSet<>();
+        channels = new ArrayList<>();
     }
 
     public void addChannel(Channel channel) {
 
-        channels.add(channel);
-        notifyDataSetChanged();
+        if(!channels.contains(channel)) {
+
+            channels.add(channel);
+            notifyDataSetChanged();
+        }
     }
 
     @SuppressWarnings({"unused"})
@@ -39,15 +42,19 @@ public class RSSPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
 
-        ArrayList<Channel> channels = new ArrayList<>();
-
-        for(Channel channel: this.channels) {
-
-            channels.add(channel);
-        }
-
         Bundle bundle = new Bundle();
-        bundle.putParcelableArrayList(BundleConstant.ITEMS, channels.get(position).getItems());
+
+        int i = 0;
+        for(Channel channel: channels) {
+
+            if(i == position) {
+
+                bundle.putParcelableArrayList(BundleConstant.ITEMS, channel.getItems());
+                break;
+            }
+
+            i++;
+        }
 
         Fragment fragment = new Items();
         fragment.setArguments(bundle);

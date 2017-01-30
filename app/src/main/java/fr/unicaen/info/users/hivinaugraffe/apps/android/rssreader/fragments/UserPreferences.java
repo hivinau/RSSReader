@@ -12,6 +12,7 @@ import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 
 public class UserPreferences extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener, ListPreference.OnPreferenceChangeListener, MarqueePreference.OnPreferenceLongClickListener {
 
+    private CheckBoxPreference offlinePreference = null;
     private Preference deleteFeedsPreference = null;
     private ListPreference updateModePreference = null;
     private PreferenceCategory feedsCategory = null;
@@ -105,6 +106,7 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
 
         setPreferencesFromResource(R.xml.user_preferences, rootKey);
 
+        offlinePreference = (CheckBoxPreference) findPreference("user_offline");
         deleteFeedsPreference = findPreference("user_delete_feeds");
         updateModePreference = (ListPreference) findPreference("user_update_mode");
         feedsCategory = (PreferenceCategory) findPreference("user_feeds_category");
@@ -129,6 +131,7 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
     public void onResume() {
         super.onResume();
 
+        offlinePreference.setOnPreferenceChangeListener(this);
         deleteFeedsPreference.setOnPreferenceClickListener(this);
         updateModePreference.setOnPreferenceChangeListener(this);
 
@@ -169,6 +172,7 @@ public class UserPreferences extends PreferenceFragmentCompat implements Prefere
     public void onPause() {
         super.onPause();
 
+        offlinePreference.setOnPreferenceChangeListener(null);
         deleteFeedsPreference.setOnPreferenceClickListener(null);
         updateModePreference.setOnPreferenceChangeListener(null);
 

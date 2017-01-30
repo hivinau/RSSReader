@@ -34,17 +34,17 @@ public class EventManager implements IDatabaseManager {
     @Override
     public synchronized void close() {
 
-        if(database != null) {
+        if(database != null && database.isOpen()) {
 
-            if(database.isOpen()) {
-
-                databaseHelper.close();
-            }
+            database.close();
+            databaseHelper.close();
         }
     }
 
     @Override
     public synchronized void drop() {
+
+        open();
 
         int count = databaseHelper.getDatabaseHelperListener().tablesCount(database);
 
@@ -59,10 +59,14 @@ public class EventManager implements IDatabaseManager {
                 ((EventManagerListener) databaseHelper.getDatabaseHelperListener()).tableDropped(database, tablename);
             }
         }
+
+        close();
     }
 
     @Override
     public synchronized List<Map<String, String>> pullData(String tablename) {
+
+        open();
 
         List<Map<String, String>> maps = new ArrayList<>();
 
@@ -112,11 +116,15 @@ public class EventManager implements IDatabaseManager {
             }
         }
 
+        close();
+
         return maps;
     }
 
     @Override
     public List<Map<String, String>> rawQuery(String request, String[] args) {
+
+        open();
 
         List<Map<String, String>> maps = new ArrayList<>();
 
@@ -164,11 +172,15 @@ public class EventManager implements IDatabaseManager {
             }
         }
 
+        close();
+
         return maps;
     }
 
     @Override
     public synchronized long pushData(String tablename, Map<String, String> values) {
+
+        open();
 
         long id = -1;
 
@@ -201,11 +213,15 @@ public class EventManager implements IDatabaseManager {
             database.close();
         }
 
+        close();
+
         return id;
     }
 
     @Override
     public synchronized boolean dataExist(String tablename, Map<String, String> args) {
+
+        open();
 
         boolean exist = false;
         Cursor cursor = null;
@@ -252,11 +268,15 @@ public class EventManager implements IDatabaseManager {
             }
         }
 
+        close();
+
         return exist;
     }
 
     @Override
     public synchronized void updateData(String tablename, String column, String value, Map<String, String> args) {
+
+        open();
 
         if(value != null) {
 
@@ -295,10 +315,13 @@ public class EventManager implements IDatabaseManager {
             databaseHelper.getDatabaseHelperListener().onFailure(database, new Exception(message));
         }
 
+        close();
     }
 
     @Override
     public synchronized void dropData(String tablename, Map<String, String> args) {
+
+        open();
 
         if(args != null && args.size() > 0) {
 
@@ -323,6 +346,8 @@ public class EventManager implements IDatabaseManager {
 
             database.delete(tablename, null, null);
         }
+
+        close();
 
         databaseHelper.getDatabaseHelperListener().onSuccess(database);
     }
