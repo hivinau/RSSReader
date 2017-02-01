@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                 if(bundle != null) {
 
-                    showError(bundle.getString(BundleConstant.ERROR_OCCURED, getString(R.string.feed_add_failed)));
+                    showError(bundle.getString(BundleConstant.ERROR, getString(R.string.feed_add_failed)));
                 }
                 break;
             case Action.DATABASE_HANDLE_EVENT:
@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     if(!state) {
 
-                        showError(bundle.getString(BundleConstant.DATABASE_ERROR_OCCURED, getString(R.string.database_error_occured)));
+                        showError(bundle.getString(BundleConstant.DATABASE_ERROR, getString(R.string.database_error_occured)));
                     }
                 }
                 break;

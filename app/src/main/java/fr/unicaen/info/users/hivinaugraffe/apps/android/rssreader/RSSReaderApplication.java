@@ -84,7 +84,7 @@ public class RSSReaderApplication extends Application {
 
         if(error != null) {
 
-            bundle.putString(BundleConstant.DATABASE_ERROR_OCCURED, error);
+            bundle.putString(BundleConstant.DATABASE_ERROR, error);
         }
 
         IntentHelper.sendToActivity(RSSReaderApplication.this, MainActivity.class, Action.DATABASE_HANDLE_EVENT, bundle);
