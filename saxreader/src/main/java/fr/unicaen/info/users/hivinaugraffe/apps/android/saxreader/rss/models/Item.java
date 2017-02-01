@@ -70,8 +70,7 @@ public class Item extends RSSBase implements Parcelable {
 
         return (title != null && title.equals(item.title))
                 && (description != null && description.equals(item.description))
-                && (date != null && date.equals(item.date))
-                && (link != null && link.equals(item.link));
+                && (date != null && date.equals(item.date));
     }
 
     @Override

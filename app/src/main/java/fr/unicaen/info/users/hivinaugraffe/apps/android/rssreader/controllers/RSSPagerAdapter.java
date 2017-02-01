@@ -19,7 +19,7 @@ public class RSSPagerAdapter extends FragmentStatePagerAdapter {
 
     public void addChannel(Channel channel) {
 
-        if(!channels.contains(channel)) {
+        if (!channels.contains(channel)) {
 
             channels.add(channel);
             notifyDataSetChanged();
@@ -72,8 +72,6 @@ public class RSSPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public CharSequence getPageTitle(int position) {
 
-        Channel[] channels = this.channels.toArray(new Channel[this.channels.size()]);
-
-        return channels[position].getTitle();
+        return channels.get(position).getTitle();
     }
 }

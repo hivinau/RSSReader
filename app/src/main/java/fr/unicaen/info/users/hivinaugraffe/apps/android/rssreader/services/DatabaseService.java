@@ -382,8 +382,19 @@ public class DatabaseService extends BaseService {
 
             if(fetchingItems) {
 
-                String itemsQuery = String.format(Locale.FRANCE, "SELECT * FROM %s WHERE %s = '%s'", DatabaseConstant.TABLE_ITEMS, DatabaseConstant.TABLE_COLUMN_CHANNEL, channel.getLink());
-                List<Map<String, String>> itemsMapped = DatabaseManager.getInstance().rawQuery(itemsQuery, null);
+                columns = new String[] {
+                        DatabaseConstant.TABLE_COLUMN_TITLE,
+                        DatabaseConstant.TABLE_COLUMN_DATE,
+                        DatabaseConstant.TABLE_COLUMN_DESCRIPTION,
+                        DatabaseConstant.TABLE_COLUMN_LINK,
+                        DatabaseConstant.TABLE_COLUMN_GUID,
+                        DatabaseConstant.TABLE_COLUMN_CHANNEL
+                };
+
+                String where = String.format(Locale.FRANCE, "%s = ?", DatabaseConstant.TABLE_COLUMN_CHANNEL);
+                List<Map<String, String>> itemsMapped = DatabaseManager.getInstance().query(true, DatabaseConstant.TABLE_ITEMS, columns, where, new String[] { channel.getLink() }, DatabaseConstant.TABLE_COLUMN_LINK, null, null, null);
+                //String itemsQuery = String.format(Locale.FRANCE, "SELECT * FROM %s WHERE %s = '%s'", DatabaseConstant.TABLE_ITEMS, DatabaseConstant.TABLE_COLUMN_CHANNEL, channel.getLink());
+                //List<Map<String, String>> itemsMapped = DatabaseManager.getInstance().rawQuery(itemsQuery, null);
 
                 for(Map<String, String> itemMapped: itemsMapped) {
 

@@ -66,7 +66,7 @@ public class Feeds extends Fragment {
                                 public void run() {
 
                                     adapter.addChannel(channel);
-                                    tabLayout.setVisibility(View.VISIBLE);
+                                    tabLayout.setVisibility(adapter.getCount() > 0 ? View.VISIBLE : View.GONE);
                                 }
                             });
                         }
@@ -101,6 +101,8 @@ public class Feeds extends Fragment {
         filter.addAction(Action.THROW_NEW_CHANNEL);
         filter.addAction(Action.THROW_CHANNEL);
         filter.addAction(Action.REFRESH);
+
+        tabLayout.setVisibility(View.GONE);
     }
 
     @Override
@@ -108,8 +110,7 @@ public class Feeds extends Fragment {
         super.onResume();
 
         viewPager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(viewPager);
-        tabLayout.setVisibility(View.GONE);
+        tabLayout.setupWithViewPager(viewPager, true);
 
         getActivity().registerReceiver(broadcastReceiver, filter);
 
