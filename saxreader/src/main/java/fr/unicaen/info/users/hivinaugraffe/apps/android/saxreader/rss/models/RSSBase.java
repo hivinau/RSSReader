@@ -10,8 +10,6 @@ public class RSSBase {
     protected String date = null;
     protected String link = null;
 
-    protected final Semaphore semaphore = new Semaphore(1);
-
     public RSSBase(String title, String description, String date, String link) {
 
         this.title = title;

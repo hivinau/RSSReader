@@ -63,44 +63,15 @@ public class Item extends RSSBase implements Parcelable {
     @Override
     public boolean equals(Object obj) {
 
-        boolean same = false;
+        if (this == obj) return true;
+        if (!(obj instanceof Item)) return false;
 
-        try {
+        final Item item = (Item) obj;
 
-            semaphore.acquire();
-
-            if(obj instanceof Item) {
-
-                Item item = (Item) obj;
-
-                if(title != null) {
-
-                    same = title.equalsIgnoreCase(item.title);
-                }
-
-                if(description != null) {
-
-                    same = same && description.equalsIgnoreCase(item.description);
-                }
-
-                if(date != null) {
-
-                    same = same && date.equalsIgnoreCase(item.date);
-                }
-
-                if(link != null) {
-
-                    same = same && link.equalsIgnoreCase(item.link);
-                }
-            }
-
-        } catch (Exception ignored) { }
-        finally {
-
-            semaphore.release();
-        }
-
-        return same;
+        return (title != null && title.equals(item.title))
+                && (description != null && description.equals(item.description))
+                && (date != null && date.equals(item.date))
+                && (link != null && link.equals(item.link));
     }
 
     @Override

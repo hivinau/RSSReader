@@ -44,8 +44,6 @@ public class EventManager implements IDatabaseManager {
     @Override
     public synchronized void drop() {
 
-        open();
-
         int count = databaseHelper.getDatabaseHelperListener().tablesCount(database);
 
         if(count > 0) {
@@ -60,13 +58,10 @@ public class EventManager implements IDatabaseManager {
             }
         }
 
-        close();
     }
 
     @Override
     public synchronized List<Map<String, String>> pullData(String tablename) {
-
-        open();
 
         List<Map<String, String>> maps = new ArrayList<>();
 
@@ -106,7 +101,6 @@ public class EventManager implements IDatabaseManager {
         } catch (Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
-            database.close();
 
         } finally {
 
@@ -116,15 +110,64 @@ public class EventManager implements IDatabaseManager {
             }
         }
 
-        close();
+        return maps;
+    }
+
+    @Override
+    public List<Map<String, String>> query(boolean distinct, String tablename, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+
+        List<Map<String, String>> maps = new ArrayList<>();
+
+        Cursor cursor = null;
+        try {
+
+            List<TableColumn> tableColumns = databaseHelper.getDatabaseHelperListener().formatTableColums(database, tablename);
+
+            if(columns != null) {
+
+                cursor = database.query(distinct, tablename, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
+
+                if(cursor != null) {
+
+                    if(cursor.moveToFirst()) {
+
+                        while(!cursor.isAfterLast()) {
+
+                            Map<String, String> map = new HashMap<>();
+
+                            for(TableColumn column: tableColumns) {
+
+                                String columnName = column.getName();
+
+                                int index = cursor.getColumnIndex(columnName);
+                                map.put(columnName, cursor.getString(index));
+                            }
+
+                            maps.add(map);
+
+                            cursor.moveToNext();
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception exception) {
+
+            databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
+
+        } finally {
+
+            if(cursor != null) {
+
+                cursor.close();
+            }
+        }
 
         return maps;
     }
 
     @Override
     public List<Map<String, String>> rawQuery(String request, String[] args) {
-
-        open();
 
         List<Map<String, String>> maps = new ArrayList<>();
 
@@ -162,7 +205,6 @@ public class EventManager implements IDatabaseManager {
         } catch (Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
-            database.close();
 
         } finally {
 
@@ -172,15 +214,11 @@ public class EventManager implements IDatabaseManager {
             }
         }
 
-        close();
-
         return maps;
     }
 
     @Override
     public synchronized long pushData(String tablename, Map<String, String> values) {
-
-        open();
 
         long id = -1;
 
@@ -210,18 +248,13 @@ public class EventManager implements IDatabaseManager {
         } catch(Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
-            database.close();
         }
-
-        close();
 
         return id;
     }
 
     @Override
     public synchronized boolean dataExist(String tablename, Map<String, String> args) {
-
-        open();
 
         boolean exist = false;
         Cursor cursor = null;
@@ -258,7 +291,6 @@ public class EventManager implements IDatabaseManager {
         } catch (Exception exception) {
 
             databaseHelper.getDatabaseHelperListener().onFailure(database, exception);
-            database.close();
 
         } finally {
 
@@ -268,15 +300,11 @@ public class EventManager implements IDatabaseManager {
             }
         }
 
-        close();
-
         return exist;
     }
 
     @Override
     public synchronized void updateData(String tablename, String column, String value, Map<String, String> args) {
-
-        open();
 
         if(value != null) {
 
@@ -314,14 +342,10 @@ public class EventManager implements IDatabaseManager {
             String message = String.format("Value for '%s' must be not null", column);
             databaseHelper.getDatabaseHelperListener().onFailure(database, new Exception(message));
         }
-
-        close();
     }
 
     @Override
     public synchronized void dropData(String tablename, Map<String, String> args) {
-
-        open();
 
         if(args != null && args.size() > 0) {
 
@@ -346,8 +370,6 @@ public class EventManager implements IDatabaseManager {
 
             database.delete(tablename, null, null);
         }
-
-        close();
 
         databaseHelper.getDatabaseHelperListener().onSuccess(database);
     }

@@ -240,6 +240,8 @@ public class DatabaseService extends BaseService {
                                         } catch (Exception exception) {
 
                                             sendError(exception.getLocalizedMessage());
+
+                                            exception.printStackTrace();
                                         } finally {
 
                                             semaphore.release();
@@ -337,7 +339,15 @@ public class DatabaseService extends BaseService {
 
         Set<Channel> channels = new HashSet<>();
 
-        List<Map<String, String>> channelsMapped = DatabaseManager.getInstance().pullData(DatabaseConstant.TABLE_CHANNELS);
+        String[] columns = new String[] {
+                DatabaseConstant.TABLE_COLUMN_TITLE,
+                DatabaseConstant.TABLE_COLUMN_DATE,
+                DatabaseConstant.TABLE_COLUMN_DESCRIPTION,
+                DatabaseConstant.TABLE_COLUMN_LINK
+        };
+
+        List<Map<String, String>> channelsMapped = DatabaseManager.getInstance().query(true, DatabaseConstant.TABLE_CHANNELS, columns, null, null, DatabaseConstant.TABLE_COLUMN_LINK, null, null, null);
+        //List<Map<String, String>> channelsMapped = DatabaseManager.getInstance().pullData(DatabaseConstant.TABLE_CHANNELS);
 
         for(Map<String, String> channelMapped: channelsMapped) {
 
@@ -372,7 +382,8 @@ public class DatabaseService extends BaseService {
 
             if(fetchingItems) {
 
-                List<Map<String, String>> itemsMapped = DatabaseManager.getInstance().rawQuery("SELECT * FROM " + DatabaseConstant.TABLE_ITEMS + " WHERE " + DatabaseConstant.TABLE_COLUMN_CHANNEL + " = '" + channel.getLink() + "'", null);
+                String itemsQuery = String.format(Locale.FRANCE, "SELECT * FROM %s WHERE %s = '%s'", DatabaseConstant.TABLE_ITEMS, DatabaseConstant.TABLE_COLUMN_CHANNEL, channel.getLink());
+                List<Map<String, String>> itemsMapped = DatabaseManager.getInstance().rawQuery(itemsQuery, null);
 
                 for(Map<String, String> itemMapped: itemsMapped) {
 

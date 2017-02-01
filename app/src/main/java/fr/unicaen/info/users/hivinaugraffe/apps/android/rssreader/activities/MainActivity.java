@@ -15,6 +15,7 @@ import android.support.design.widget.*;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.R;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.sqldatabase.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.*;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.services.*;
@@ -180,6 +181,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         Intent databaseIntent = new Intent(MainActivity.this, DatabaseService.class);
         bindService(databaseIntent, databaseConnection, Context.BIND_AUTO_CREATE);
+
+        try {
+
+            DatabaseManager.getInstance().open();
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -209,6 +215,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             unbindService(databaseConnection);
         }
+
+        try {
+            DatabaseManager.getInstance().close();
+        } catch (Exception ignored) {}
     }
 
     @Override

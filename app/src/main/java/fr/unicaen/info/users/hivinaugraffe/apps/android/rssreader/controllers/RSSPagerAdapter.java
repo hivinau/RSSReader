@@ -9,18 +9,21 @@ import fr.unicaen.info.users.hivinaugraffe.apps.android.saxreader.rss.models.*;
 
 public class RSSPagerAdapter extends FragmentStatePagerAdapter {
 
-    private final Set<Channel> channels;
+    private final List<Channel> channels;
 
     public RSSPagerAdapter(FragmentManager manager) {
         super(manager);
 
-        channels = new HashSet<>();
+        channels = new ArrayList<>();
     }
 
     public void addChannel(Channel channel) {
 
-        channels.add(channel);
-        notifyDataSetChanged();
+        if(!channels.contains(channel)) {
+
+            channels.add(channel);
+            notifyDataSetChanged();
+        }
     }
 
     @SuppressWarnings({"unused"})
