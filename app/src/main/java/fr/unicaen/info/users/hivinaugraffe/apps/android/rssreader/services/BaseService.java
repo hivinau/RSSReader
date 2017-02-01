@@ -6,7 +6,10 @@ import android.app.*;
 import android.content.*;
 import java.util.concurrent.*;
 import android.support.annotation.*;
+
+import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.activities.MainActivity;
 import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.globals.*;
+import fr.unicaen.info.users.hivinaugraffe.apps.android.rssreader.helpers.IntentHelper;
 
 public class BaseService extends Service {
 
@@ -65,14 +68,9 @@ public class BaseService extends Service {
 
     protected void sendError(String error) {
 
-        Intent intent = new Intent();
-
         Bundle bundle = new Bundle();
         bundle.putString(BundleConstant.ERROR, error);
 
-        intent.setAction(Action.THROW_ERROR);
-        intent.putExtras(bundle);
-
-        sendBroadcast(intent);
+        IntentHelper.sendToActivity(this, MainActivity.class, Action.THROW_ERROR, bundle);
     }
 }
